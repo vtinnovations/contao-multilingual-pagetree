@@ -3,7 +3,6 @@
     "description": "A unified multilingual page-tree workflow for Contao with connected and free content translation modes.",
     "type": "contao-bundle",
     "license": "proprietary",
-    "version": "dev-main",
     "keywords": [
         "contao",
         "contao-bundle",
