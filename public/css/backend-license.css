@@ -1,0 +1,9 @@
+/*
+ * Contao Multilingual Pagetree
+ * Package: vtinnovations/contao-multilingual-pagetree
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
+.cmp-root-licence{max-width:52rem;padding:.25rem 0}.cmp-root-licence:focus-visible,.cmp-root-licence__status:focus-visible{outline:2px solid var(--contao,#f47c00);outline-offset:3px}.cmp-root-licence__status{display:grid;grid-template-columns:minmax(9rem,13rem) minmax(0,1fr);gap:.35rem 1rem;margin:1rem 0}.cmp-root-licence__status dt{font-weight:600}.cmp-root-licence__status dd{margin:0;overflow-wrap:anywhere}.cmp-root-licence__key{display:grid;grid-template-columns:minmax(9rem,13rem) minmax(12rem,28rem);align-items:center;gap:.5rem 1rem;margin:1rem 0}.cmp-root-licence__actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}.cmp-root-licence__remove{color:var(--red,#b11)}@media(max-width:48rem){.cmp-root-licence__status,.cmp-root-licence__key{grid-template-columns:1fr}.cmp-root-licence__status dd{margin-bottom:.4rem}}

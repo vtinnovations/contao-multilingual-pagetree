@@ -1,0 +1,70 @@
+/*
+ * Contao Multilingual Pagetree
+ * Package: vtinnovations/contao-multilingual-pagetree
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
+.language-switcher ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: .625rem;
+}
+
+.cmp-switcher--horizontal ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cmp-switcher--vertical ul {
+    flex-direction: column;
+}
+
+.language-switcher a,
+.language-switcher span.language-active,
+.language-switcher span.language-unavailable {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    text-decoration: none;
+    color: inherit;
+}
+.language-switcher .language-switcher__item--active span.language-active {
+    font-weight: bold;
+}
+
+/* Unavailable languages are not links: mark them by more than colour alone. */
+.language-switcher span.language-unavailable {
+    opacity: 0.55;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* The state text stays available to assistive technology in every style. */
+.language-switcher__state {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Flag-only mode keeps its label accessible instead of removing it. */
+.language-switcher__label--visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

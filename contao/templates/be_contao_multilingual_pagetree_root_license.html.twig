@@ -1,0 +1,35 @@
+{# Internal backend view. It intentionally has no legacy .html5 companion. #}
+<div class="cmp-root-licence" id="cmp-root-licence-panel" role="region" aria-label="{{ labels.legend|default('legend') }}" tabindex="-1" data-cmp-licence-panel>
+  <p class="tl_info"><strong>{{ labels.notice|default('notice') }}</strong><br>{{ labels.obtain|default('obtain') }} <a href="https://www.v-t.one" target="_blank" rel="noopener">www.v-t.one</a>.</p>
+  {% if not rootDomain %}<p class="tl_error" role="alert">{{ labels.missingDomainHelp|default('missingDomainHelp') }}</p>{% endif %}
+  {% if legacyNotice %}<p class="tl_info">{{ labels.legacyNotice|default('legacyNotice') }}</p>{% endif %}
+  {% if not canManage and rootDomain %}<p class="tl_info">{{ labels.readOnly|default('readOnly') }}</p>{% endif %}
+  <dl class="cmp-root-licence__status" tabindex="-1">
+    <dt>{{ labels.status|default('status') }}</dt><dd>{{ statusLabel }}</dd>
+    <dt>{{ labels.rootDomain|default('rootDomain') }}</dt><dd>{{ rootDomain|default(labels.missingDomain|default('missingDomain')) }}</dd>
+    <dt>{{ labels.domain|default('domain') }}</dt><dd>{{ licenceDomain|default('—') }}</dd>
+    <dt>{{ labels.term|default('term') }}</dt><dd>{% if lifetime %}{{ labels.lifetime|default('lifetime') }}{% else %}{{ labels.notActivated|default('notActivated') }}{% endif %}</dd>
+    <dt>{{ labels.activationState|default('activationState') }}</dt><dd>{% if active %}{{ labels.active|default('active') }}{% else %}{{ labels.inactive|default('inactive') }}{% endif %}</dd>
+  </dl>
+  <input type="hidden" value="{{ rootId }}" data-cmp-post-name="root_id">
+  <input type="hidden" value="{{ rootDomain|default('') }}" data-cmp-post-name="root_domain">
+  <input type="hidden" value="{{ token }}" data-cmp-post-name="REQUEST_TOKEN">
+  {% if canManage %}
+    <div class="cmp-root-licence__key">
+      <label for="ctrl_cmp_licence_key">{{ labels.key|default('key') }}</label>
+      <input class="tl_text" type="password" id="ctrl_cmp_licence_key" autocomplete="off" data-cmp-licence-focus data-cmp-post-name="licence_key">
+    </div>
+    <div class="cmp-root-licence__actions">
+      {% if not stored %}
+        <button class="tl_submit" type="button" data-cmp-licence-action="activate" data-cmp-licence-action-url="{{ activateUrl }}">{{ labels.activate|default('activate') }}</button>
+      {% else %}
+        <button class="tl_submit" type="button" data-cmp-licence-action="verify" data-cmp-licence-action-url="{{ verifyUrl }}">{{ labels.verify|default('verify') }}</button>
+        <button class="tl_submit" type="button" data-cmp-licence-action="refresh" data-cmp-licence-action-url="{{ refreshUrl }}">{{ labels.refresh|default('refresh') }}</button>
+        <button class="tl_submit" type="button" data-cmp-licence-action="replace" data-cmp-licence-action-url="{{ replaceUrl }}">{{ labels.replace|default('replace') }}</button>
+        <button class="tl_submit cmp-root-licence__remove" type="button" data-cmp-licence-action="remove" data-cmp-licence-action-url="{{ removeUrl }}" data-confirm="{{ labels.removeConfirm|default('removeConfirm') }}">{{ labels.remove|default('remove') }}</button>
+      {% endif %}
+    </div>
+  {% elseif not rootDomain %}
+    <div class="cmp-root-licence__actions"><button class="tl_submit" type="button" disabled aria-disabled="true">{{ labels.activate|default('activate') }}</button></div>
+  {% endif %}
+</div>

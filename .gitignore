@@ -1,0 +1,17 @@
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+.env
+.env.local
+.env.*.local
+
+vendor/
+node_modules/
+var/
+public/bundles/
+
+.phpunit.result.cache
+.php-cs-fixer.cache
+composer.phar

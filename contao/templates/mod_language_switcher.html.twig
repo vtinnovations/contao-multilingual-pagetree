@@ -1,0 +1,68 @@
+{#
+  Contao Multilingual Pagetree
+  Package: vtinnovations/contao-multilingual-pagetree
+  Copyright: V&T Innovations Team
+  Licence: proprietary
+  Website: https://www.v-t.one
+#}
+
+{#
+  Presentation only: every entry already carries its resolved availability
+  state. The template never decides whether a language is available.
+#}
+<div class="{{ class }}"{{ cssID|raw }}>
+  {% if headline %}
+    <{{ hl }}>{{ headline }}</{{ hl }}>
+  {% endif %}
+  <nav class="cmp-switcher cmp-switcher--{{ orientation }} cmp-switcher--{{ presentation }} language-switcher language-switcher--{{ style }}" aria-label="{{ labels.switcher }}">
+    <ul>
+      {% for lang in languages %}
+        <li class="language-switcher__item language-switcher__item--{{ lang.status }}{{ lang.fallback ? ' language-switcher__item--fallback' : '' }}">
+          {% if lang.active %}
+            <span class="language-active"
+                  lang="{{ lang.language }}"
+                  aria-current="page"
+                  title="{{ lang.label }}">
+              {% if presentation != 'labels' and lang.flag %}
+                <img src="bundles/vtinnovationscontaomultilingualpagetree/flags/{{ lang.flag }}.svg"
+                     alt="{{ lang.label }}"
+                     width="24" height="16"
+                     loading="lazy">
+              {% endif %}
+              <span class="language-switcher__label{{ presentation == 'flags' ? ' language-switcher__label--visually-hidden' : '' }}">{{ lang.label }}</span>
+              <span class="language-switcher__state">{{ labels.current }}</span>
+            </span>
+          {% elseif lang.available %}
+            <a href="{{ lang.href }}"
+               lang="{{ lang.language }}"
+               {% if lang.hreflang %}hreflang="{{ lang.hreflang }}"{% endif %}
+               title="{{ lang.label }}">
+              {% if presentation != 'labels' and lang.flag %}
+                <img src="bundles/vtinnovationscontaomultilingualpagetree/flags/{{ lang.flag }}.svg"
+                     alt="{{ lang.label }}"
+                     width="24" height="16"
+                     loading="lazy">
+              {% endif %}
+              <span class="language-switcher__label{{ presentation == 'flags' ? ' language-switcher__label--visually-hidden' : '' }}">{{ lang.label }}</span>
+            </a>
+          {% else %}
+            {# Unavailable entries are never links and never focusable. #}
+            <span class="language-unavailable"
+                  lang="{{ lang.language }}"
+                  aria-disabled="true"
+                  title="{{ lang.label }} – {{ labels.unavailable }}">
+              {% if presentation != 'labels' and lang.flag %}
+                <img src="bundles/vtinnovationscontaomultilingualpagetree/flags/{{ lang.flag }}.svg"
+                     alt="{{ lang.label }}"
+                     width="24" height="16"
+                     loading="lazy">
+              {% endif %}
+              <span class="language-switcher__label{{ presentation == 'flags' ? ' language-switcher__label--visually-hidden' : '' }}">{{ lang.label }}</span>
+              <span class="language-switcher__state">{{ labels.unavailable }}</span>
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+</div>

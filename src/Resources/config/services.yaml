@@ -1,0 +1,492 @@
+# Contao Multilingual Pagetree
+# Package: vtinnovations/contao-multilingual-pagetree
+# Copyright: V&T Innovations Team
+# Licence: proprietary
+# Website: https://www.v-t.one
+
+parameters:
+    # Private working area of the bundle, outside the document root. The path is
+    # a parameter so it can never be influenced by a request.
+    contao_multilingual_pagetree.state_directory: '%kernel.project_dir%/var/contao-multilingual-pagetree/state'
+    contao_multilingual_pagetree.licences_directory: '%kernel.project_dir%/var/contao-multilingual-pagetree/licences'
+
+services:
+    _instanceof:
+        Vtinnovations\ContaoMultilingualPagetree\Translation\TranslationFieldPolicyContributorInterface:
+            tags: ['contao_multilingual_pagetree.translation_field_policy_contributor']
+
+        Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRuleInterface:
+            tags: ['contao_multilingual_pagetree.integrity_rule']
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Vtinnovations\ContaoMultilingualPagetree\:
+        resource: '../../*'
+        # Value objects, results, enums and exceptions are not services. Broad
+        # discovery would make Symfony treat them as autowireable and can break
+        # contao-setup during container compilation, so they are excluded here
+        # and the few services that need arguments are configured below.
+        exclude: '../../{DependencyInjection,Entity,ContaoManager,Model,VtinnovationsContaoMultilingualPagetreeBundle.php,Availability/PageAvailabilityResult.php,Availability/ResourceLanguageAvailability.php,Availability/SiteLanguage.php,Content/ContentFieldRole.php,Content/ContentOwnership.php,Content/ImportSummary.php,Content/ModeSwitchDeniedException.php,Content/ModeSwitchSummary.php,Detail/DetailContext.php,Detail/DetailTargetResult.php,Distribution/ActivationOutcome.php,Distribution/ChannelAddress.php,Distribution/ChannelResponse.php,Distribution/ChannelTransportException.php,Distribution/ChannelUpdateResult.php,Distribution/ProductProfile.php,Distribution/RegistrationOutcome.php,Integrity/CascadePlan.php,Integrity/IntegrityIssue.php,Integrity/IntegrityIssueCollection.php,Integrity/IntegrityRepairAction.php,Integrity/IntegrityRepairPlan.php,Integrity/IntegrityRepairResult.php,Integrity/IntegrityReport.php,Integrity/IntegrityScope.php,Metadata/LanguageMetadata.php,Packaging/DocumentStatus.php,Packaging/PackageDocument.php,Packaging/PackageFormatException.php,Packaging/PackageSeal.php,Packaging/SealedPackage.php,Packaging/ServiceTier.php,Review/ChangedSourceField.php,Review/ReviewActionResult.php,Review/ReviewState.php,Review/SourceFingerprint.php,Security/Capability.php,Security/CapabilityDecision.php,Security/CapabilityDenial.php,Security/ChannelRequestRejected.php,Security/VerifiedChannelRequest.php,Storage/LedgerEntry.php,Storage/PackageStoreException.php,Storage/RequestLedgerException.php,Support/CanonicalInput.php,Support/PinnedMaterial.php,Support/SignatureScheme.php,Support/VerificationKey.php,Switcher/SwitcherEntry.php,Translation/TranslationFieldPolicy.php,Translation/TranslationFieldRegistration.php,Backend/BackendLanguageFallback.php,Backend/BackendTranslationScope.php,Url/EntryPointOrigin.php,Url/InvalidLanguageUrlException.php,Url/LanguageUrlMapping.php,Url/LanguageUrlMappingSet.php,Url/LanguageUrlMessages.php,Url/ProtocolMode.php}'
+
+    # Shared time source. Everything that compares timestamps uses this port so
+    # tests can pin the moment instead of approximating it.
+    Vtinnovations\ContaoMultilingualPagetree\Helper\Clock:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Helper\SystemClock
+
+    # Pinned verification material. The factory reads code constants only: no
+    # configuration, database or request value can influence what is trusted.
+    Vtinnovations\ContaoMultilingualPagetree\Support\KeyDirectory:
+        factory: ['Vtinnovations\ContaoMultilingualPagetree\Support\KeyDirectory', 'pinned']
+
+    Vtinnovations\ContaoMultilingualPagetree\Support\DetachedSignature:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Private working state below var/. No I/O happens while the service is
+    # built; a missing directory is a valid installation state.
+    Vtinnovations\ContaoMultilingualPagetree\Storage\PackageStoreInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Storage\RootScopedPackageStore
+
+    Vtinnovations\ContaoMultilingualPagetree\Storage\RootScopedPackageStore:
+        arguments:
+            $baseDirectory: '%contao_multilingual_pagetree.licences_directory%'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Storage\FilesystemPackageStore:
+        arguments:
+            $directory: '%contao_multilingual_pagetree.state_directory%'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Storage\RequestLedgerInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Storage\DatabaseRequestLedger
+
+    Vtinnovations\ContaoMultilingualPagetree\Storage\DatabaseRequestLedger:
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Runs after Contao's own DCA schema listener. DCA owns the ledger columns;
+    # this listener adds the custom physical index names that DCA shorthand
+    # cannot express, making them part of the authoritative expected schema.
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\BundleSchemaListener:
+        tags:
+            - { name: doctrine.event_listener, event: postGenerateSchema, priority: -100 }
+
+    # Central server-side guard for state-changing backend actions
+    Vtinnovations\ContaoMultilingualPagetree\Security\BackendActionGuard:
+        public: true
+        arguments:
+            $requestStack: '@request_stack'
+            $tokenManager: '@?contao.csrf.token_manager'
+            $tokenName: '%contao.csrf_token_name%'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Entitlement evaluation. The result is shared input for the individual
+    # gates; it is reset between worker cycles so a long-running process cannot
+    # keep a stale decision alive.
+    Vtinnovations\ContaoMultilingualPagetree\Security\CapabilityPolicy:
+        public: true
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Metadata\RootScope:
+        public: true
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Metadata\RootDomainRegistry:
+        arguments:
+            $framework: '@?contao.framework'
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\LanguageRequestListener:
+        arguments:
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\RootScopeListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 40 }
+
+    # Authenticates inbound server-to-server requests. It knows nothing about
+    # sessions, tokens or origins: only signatures.
+    Vtinnovations\ContaoMultilingualPagetree\Security\ChannelRequestVerifier: ~
+
+    # Integrity validation, cascading cleanup and repair tooling
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityDataSourceInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Integrity\DatabaseIntegrityDataSource
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\DatabaseIntegrityDataSource:
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityWriterInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Integrity\DatabaseIntegrityWriter
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\DatabaseIntegrityWriter:
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRuleRegistry:
+        arguments:
+            $rules: !tagged_iterator contao_multilingual_pagetree.integrity_rule
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityScanner:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRepairPlanner:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityCacheInvalidatorInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Integrity\TagBasedCacheInvalidator
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\TagBasedCacheInvalidator:
+        arguments:
+            $framework: '@?contao.framework'
+            $tagInvalidator: '@?fos_http_cache.cache_manager'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRepairExecutor:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Integrity\CascadeCleanup:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_integrity'
+
+    Vtinnovations\ContaoMultilingualPagetree\Command\DataReportCommand:
+        arguments:
+            $connection: '@database_connection'
+            $framework: '@?contao.framework'
+        tags: ['console.command']
+
+    Vtinnovations\ContaoMultilingualPagetree\Command\IntegrityScanCommand:
+        arguments:
+            $framework: '@?contao.framework'
+        tags: ['console.command']
+
+    Vtinnovations\ContaoMultilingualPagetree\Command\IntegrityRepairCommand:
+        arguments:
+            $framework: '@?contao.framework'
+        tags: ['console.command']
+
+    Vtinnovations\ContaoMultilingualPagetree\Command\RegistrationCommand:
+        arguments:
+            $framework: '@?contao.framework'
+        tags: ['console.command']
+
+    # Outbound channel: one transport, locked to a single fixed host, plus the
+    # activation coordinator both the outbound and the inbound path end in.
+    Vtinnovations\ContaoMultilingualPagetree\Distribution\ChannelTransportInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Distribution\CurlChannelTransport
+
+    Vtinnovations\ContaoMultilingualPagetree\Distribution\PackageActivator:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Explicit registration operations log to their own channel and file, so an
+    # operator can read the outcome of an operation they just triggered. Nothing
+    # writes there during rendering, installation or container compilation.
+    Vtinnovations\ContaoMultilingualPagetree\Distribution\RegistrationClient:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_license'
+
+    Vtinnovations\ContaoMultilingualPagetree\Distribution\ChannelUpdateProcessor:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Distribution\UsageSignal:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\UsageSignalListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.terminate }
+
+    Vtinnovations\ContaoMultilingualPagetree\Controller\ChannelUpdateController:
+        public: true
+        tags: ['controller.service_arguments']
+
+    # Connected and free content translation modes
+    Vtinnovations\ContaoMultilingualPagetree\Content\FreeContentStorageInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Content\DatabaseFreeContentStorage
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\DatabaseFreeContentStorage:
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\LanguageRecordLocator:
+        arguments:
+            $connection: '@database_connection'
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentModeContext:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationModeResolver:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ModeSwitchAnalyzer:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ModeSwitchGuard:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ConnectedToFreeImporter:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\ContentModeDca:
+        public: true
+
+    # Source-change tracking and translation review
+    Vtinnovations\ContaoMultilingualPagetree\Review\TranslationReviewStorageInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Review\DatabaseTranslationReviewStorage
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Review\DatabaseTranslationReviewStorage:
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Review\SourceFingerprintCalculator:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Review\TranslationReviewResolver:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Review\TranslationReviewMarker:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Review\ReviewBadgeRenderer:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\TranslationReviewDca:
+        public: true
+        arguments:
+            $router: '@?router'
+
+    # Resource availability, switcher and metadata layer
+    Vtinnovations\ContaoMultilingualPagetree\Detail\DetailTargetResolverInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Detail\DetailTargetUrlResolver
+
+    Vtinnovations\ContaoMultilingualPagetree\Availability\ResourceAvailabilityResolver:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    Vtinnovations\ContaoMultilingualPagetree\Detail\DetailTargetUrlResolver:
+        arguments:
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    Vtinnovations\ContaoMultilingualPagetree\Metadata\LanguageMetadataBuilder:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    # Page-availability layer
+    Vtinnovations\ContaoMultilingualPagetree\Availability\SiteLanguageRegistryInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Availability\ModelSiteLanguageRegistry
+
+    Vtinnovations\ContaoMultilingualPagetree\Availability\ModelSiteLanguageRegistry:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Availability\PageAvailabilityResolver:
+        arguments:
+            $tokenChecker: '@?contao.security.token_checker'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\PageTranslationListener:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Pre-render translation overlay layer
+    Vtinnovations\ContaoMultilingualPagetree\Translation\TranslationRecordLocatorInterface:
+        alias: Vtinnovations\ContaoMultilingualPagetree\Translation\ModelTranslationRecordLocator
+
+    Vtinnovations\ContaoMultilingualPagetree\Translation\ModelTranslationRecordLocator:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Translation\ScopedModelOverlay:
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\ContentTranslationListener:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\EventListener\ArticleTranslationListener:
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\LanguageTabs:
+        public: true
+
+    # The one backend translation-context resolver. It is request scoped and is
+    # released between worker cycles so a long running process can never serve
+    # one editor's language selection to the next request.
+    Vtinnovations\ContaoMultilingualPagetree\Backend\BackendLanguageContext:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    # The one builder for backend URLs that carry a translation context.
+    Vtinnovations\ContaoMultilingualPagetree\Backend\BackendUrlBuilder:
+        public: true
+        arguments:
+            $tokens: '@?contao.csrf.token_manager'
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\SiteLanguageDca:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\LanguageAndFlagChoiceProvider:
+        public: true
+
+    # Resolves the edited page record at every stage of the DCA lifecycle. It is
+    # public because Contao resolves DCA callback classes through the container
+    # and legacy backend classes look it up by id.
+    Vtinnovations\ContaoMultilingualPagetree\Backend\RootPageContext:
+        public: true
+        arguments:
+            $framework: '@?contao.framework'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\PageRootPalette:
+        public: true
+
+    # Claims the once-per-authenticated-session module-entry signal. It is bound
+    # to the backend render lifecycle, never to a kernel listener.
+    Vtinnovations\ContaoMultilingualPagetree\Backend\ModuleEntryNotice:
+        arguments:
+            $requestStack: '@request_stack'
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\RootLicenseDca:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController:
+        public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree_license'
+        tags: ['controller.service_arguments']
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\TranslationStateDca:
+        public: true
+
+    # Additional-language content editing. The adapter and the schema helper are
+    # public because Contao resolves DCA callback classes through the container.
+    Vtinnovations\ContaoMultilingualPagetree\Backend\ContentTranslationAdapter:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\ContentTranslationSchema:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationRepository:
+        public: true
+        arguments:
+            $connection: '@database_connection'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+
+    # Holds one submission's translated values between the field callbacks and
+    # the record callback. Released between worker cycles.
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationBuffer:
+        public: true
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationFieldPolicy:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Content\ContentValueProvenance:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Translation\TranslationFieldRegistry:
+        public: true
+        arguments:
+            $contributors: !tagged_iterator contao_multilingual_pagetree.translation_field_policy_contributor
+
+    # Central language URL layer. Everything that needs a protocol, a hostname
+    # or an entry point resolves it here; nothing recalculates one elsewhere.
+    Vtinnovations\ContaoMultilingualPagetree\Url\LanguageDomainNormalizer: ~
+
+    Vtinnovations\ContaoMultilingualPagetree\Url\EntryPointNormalizer: ~
+
+    Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver:
+        public: true
+        arguments:
+            $framework: '@?contao.framework'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
+
+    Vtinnovations\ContaoMultilingualPagetree\Url\IncomingLanguageResolver: ~
+
+    Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlCollisionValidator:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Backend\LanguageUrlDca:
+        public: true
+
+    Vtinnovations\ContaoMultilingualPagetree\Migration\LanguageUrlMigration:
+        arguments:
+            $connection: '@database_connection'
+
+    Vtinnovations\ContaoMultilingualPagetree\Routing\MultilingualPagetreePageRegistryDecorator:
+        decorates: contao.routing.page_registry
+        decoration_on_invalid: ignore
+        decoration_priority: 10
+        arguments:
+            $inner: '@.inner'
+            $framework: '@contao.framework'
+            $entryPoints: '@Vtinnovations\ContaoMultilingualPagetree\Url\EntryPointNormalizer'
+            $languageUrlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+
+    Vtinnovations\ContaoMultilingualPagetree\Routing\MultilingualPagetreePageCandidatesDecorator:
+        decorates: contao.routing.page_candidates
+        decoration_on_invalid: ignore
+        decoration_priority: 10
+        arguments:
+            $inner: '@.inner'
+            $connection: '@database_connection'
+
+    Vtinnovations\ContaoMultilingualPagetree\Routing\MultilingualPagetreeRouteProviderDecorator:
+        decorates: contao.routing.route_provider
+        decoration_on_invalid: ignore
+        decoration_priority: 10
+        arguments:
+            $inner: '@.inner'
+            $urlResolver: '@Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver'
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'

@@ -1,0 +1,100 @@
+{
+    "name": "vtinnovations/contao-multilingual-pagetree",
+    "description": "A unified multilingual page-tree workflow for Contao with connected and free content translation modes.",
+    "type": "contao-bundle",
+    "license": "proprietary",
+    "version": "dev-main",
+    "keywords": [
+        "contao",
+        "contao-bundle",
+        "translation",
+        "localization",
+        "multilingual-pagetree",
+        "multilingual",
+        "language-tabs",
+        "change language"
+    ],
+    "authors": [
+        {
+            "name": "V&T Innovations Team",
+            "homepage": "https://www.v-t.one",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/vtinnovations/contao-multilingual-pagetree/issues",
+        "source": "https://github.com/vtinnovations/contao-multilingual-pagetree"
+    },
+    "require": {
+        "php": "^8.1",
+        "contao/core-bundle": "^5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vtinnovations\\ContaoMultilingualPagetree\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vtinnovations\\ContaoMultilingualPagetree\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "contao-components/installer": true,
+            "contao/manager-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "@test:all",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
+        "test:all": [
+            "@test:unit",
+            "@test:integration"
+        ],
+        "lint": [
+            "@lint:identity",
+            "@lint:php",
+            "@lint:config"
+        ],
+        "lint:identity": "@php tools/validate-identity.php",
+        "lint:php": "find src contao tests tools -type f -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "lint:config": "@php tools/validate-config.php",
+        "security": [
+            "@composer validate --strict",
+            "@composer audit"
+        ],
+        "release:check": "@php tools/validate-release-keys.php",
+        "release:build": "@php tools/build-release.php",
+        "release:verify": "@php tools/verify-release-artefact.php"
+    },
+    "scripts-descriptions": {
+        "test": "Runs the unit and package-integration suites.",
+        "lint": "Validates bundle identity, PHP syntax and configuration resources.",
+        "security": "Validates package metadata and audits dependencies for known advisories.",
+        "release:check": "Fails when the pinned verification material is missing or unusable.",
+        "release:build": "Builds the hardened release artefact into --out=<directory>.",
+        "release:verify": "Verifies a built release artefact instead of the source tree."
+    },
+    "archive": {
+        "exclude": [
+            "/.github",
+            "/tests",
+            "/tools",
+            "/docs",
+            "/phpunit.xml.dist",
+            "/.gitignore",
+            "/UPGRADE.md"
+        ]
+    },
+    "extra": {
+        "contao-manager-plugin": "Vtinnovations\\ContaoMultilingualPagetree\\ContaoManager\\Plugin"
+    }
+}

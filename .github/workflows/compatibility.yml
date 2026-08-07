@@ -1,0 +1,252 @@
+# Contao Multilingual Pagetree
+# Package: vtinnovations/contao-multilingual-pagetree
+# Copyright: V&T Innovations Team
+# Licence: proprietary
+# Website: https://www.v-t.one
+
+name: Contao compatibility
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: contao-compatibility-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Contao 5.0 / PHP 8.1 / lowest
+            php: '8.1'
+            contao: '5.0.*'
+            strategy: lowest
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.0 / PHP 8.5 / stable
+            php: '8.5'
+            contao: '5.0.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.1 / PHP 8.1 / stable
+            php: '8.1'
+            contao: '5.1.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.2 / PHP 8.1 / stable
+            php: '8.1'
+            contao: '5.2.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.3 / PHP 8.1 / stable
+            php: '8.1'
+            contao: '5.3.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.4 / PHP 8.1 / stable
+            php: '8.1'
+            contao: '5.4.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.5 / PHP 8.2 / stable
+            php: '8.2'
+            contao: '5.5.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.6 / PHP 8.2 / stable
+            php: '8.2'
+            contao: '5.6.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.7 / PHP 8.3 / stable
+            php: '8.3'
+            contao: '5.7.*'
+            strategy: stable
+            test_scope: full
+            database: MariaDB 10.6
+          - name: Contao 5.7 / PHP 8.5 / highest
+            php: '8.5'
+            contao: '5.7.*'
+            strategy: highest
+            test_scope: full + bundle deprecations
+            database: MariaDB 10.6
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_DATABASE: contao
+          MARIADB_USER: contao
+          MARIADB_PASSWORD: contao
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      COMPOSER_ROOT_VERSION: dev-main
+      CONTAO_CONSTRAINT: ${{ matrix.contao }}
+      DEPENDENCY_STRATEGY: ${{ matrix.strategy }}
+      DATABASE_URL: 'mysql://contao:contao@127.0.0.1:3306/contao?serverVersion=mariadb-10.6.0&charset=utf8mb4'
+      APP_SECRET: compatibility-test-secret
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      SYMFONY_DEPRECATIONS_HELPER: ${{ matrix.strategy == 'highest' && 'max[self]=0' || 'weak' }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, curl, dom, fileinfo, gd, iconv, intl, json, mbstring, openssl, pdo, pdo_mysql, simplexml, sodium, tokenizer, xml, zip
+          ini-values: error_reporting=E_ALL, display_errors=On
+          coverage: none
+          tools: composer:v2
+
+      - name: Display runner and matrix configuration
+        run: |
+          php -v
+          php -m
+          composer --version
+          echo "Contao constraint: $CONTAO_CONSTRAINT"
+          echo "Dependency strategy: $DEPENDENCY_STRATEGY"
+          echo "Test scope: ${{ matrix.test_scope }}"
+          echo "Database: ${{ matrix.database }}"
+
+      - name: Locate Composer download cache
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php${{ matrix.php }}-contao${{ matrix.contao }}-${{ matrix.strategy }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php${{ matrix.php }}-contao${{ matrix.contao }}-${{ matrix.strategy }}-
+
+      - name: Resolve the selected Contao line
+        run: |
+          composer config audit.block-insecure false
+          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
+          if [[ "$DEPENDENCY_STRATEGY" == "lowest" ]]; then
+            composer update --with-all-dependencies --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
+          else
+            composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+          fi
+
+      - name: Verify the resolved dependency stack
+        run: |
+          php tools/verify-installed-stack.php
+          composer show contao/core-bundle
+          composer show symfony/framework-bundle
+          composer show phpunit/phpunit
+
+      - name: Run unit and package-integration regressions
+        run: composer test:all
+
+      - name: Build disposable Contao Managed Edition application
+        run: |
+          composer config --global audit.block-insecure false
+          tools/ci/create-test-application.sh "$RUNNER_TEMP/contao-application" "$GITHUB_WORKSPACE" "$CONTAO_CONSTRAINT"
+
+      - name: Boot application, compile container and verify database integration
+        run: tools/ci/run-application-smoke.sh "$RUNNER_TEMP/contao-application"
+
+  static-validation:
+    name: Static validation / PHP 8.4 / Contao 5.7
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COMPOSER_ROOT_VERSION: dev-main
+      CONTAO_CONSTRAINT: '5.7.*'
+      DEPENDENCY_STRATEGY: highest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, curl, dom, fileinfo, gd, iconv, intl, json, mbstring, openssl, pdo, simplexml, sodium, tokenizer, xml, zip
+          ini-values: error_reporting=E_ALL, display_errors=On
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php8.4-contao5.7-static-${{ hashFiles('composer.json') }}
+
+      - name: Install representative static-analysis stack
+        run: |
+          composer config audit.block-insecure false
+          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
+          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+
+      - name: Validate Composer metadata and generated autoloading
+        run: |
+          composer validate --strict
+          composer dump-autoload --strict-psr --classmap-authoritative
+          php tools/verify-installed-stack.php
+
+      - name: Audit dependencies for known advisories
+        run: composer audit --locked --no-interaction
+
+      - name: Run project-owned static checks
+        run: composer lint
+
+      - name: Check shell scripts
+        run: bash -n tools/test-compatibility.sh tools/ci/create-test-application.sh tools/ci/run-application-smoke.sh
+
+      # No --allow-empty: the approved material is provisioned, so a ring that is
+      # empty, unusable or no longer reassembles must fail the pipeline rather
+      # than produce an artefact that can verify nothing.
+      - name: Check the pinned release material policy
+        run: php tools/check-release-material.php
+
+      - name: Build the hardened release artefact
+        run: php tools/build-release.php --out="$RUNNER_TEMP/release"
+
+      - name: Verify the built artefact, not only the source
+        run: php tools/verify-release-artefact.php "$RUNNER_TEMP/release"
+
+      - name: Compile the container against the built artefact
+        run: php tools/ci/compile-artefact-container.php "$RUNNER_TEMP/release"
+
+      - name: Ensure working tree remains reproducible
+        run: git diff --exit-code -- . ':!composer.json' ':!composer.lock'

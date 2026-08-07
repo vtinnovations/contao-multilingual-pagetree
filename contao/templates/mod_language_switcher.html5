@@ -1,0 +1,30 @@
+<?php
+
+/* Editable legacy companion for Contao's Templates area. */
+$escape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5);
+$languages = is_array($this->languages ?? null) ? $this->languages : [];
+$labels = is_array($this->labels ?? null) ? $this->labels : [];
+$presentation = (string) ($this->presentation ?? 'flags');
+?>
+<div class="<?= $escape($this->class ?? '') ?>"<?= $this->cssID ?? '' ?>>
+  <?php if ($this->headline ?? null): ?><<?= $escape($this->hl ?? 'h2') ?>><?= $escape($this->headline) ?></<?= $escape($this->hl ?? 'h2') ?>><?php endif; ?>
+  <nav class="cmp-switcher cmp-switcher--<?= $escape($this->orientation ?? 'horizontal') ?> cmp-switcher--<?= $escape($presentation) ?> language-switcher language-switcher--<?= $escape($this->style ?? 'horizontal_flags') ?>" aria-label="<?= $escape($labels['switcher'] ?? 'Language switcher') ?>">
+    <ul>
+      <?php foreach ($languages as $lang): ?>
+        <li class="language-switcher__item language-switcher__item--<?= $escape($lang['status'] ?? '') ?><?= !empty($lang['fallback']) ? ' language-switcher__item--fallback' : '' ?>">
+          <?php if (!empty($lang['active'])): ?>
+            <span class="language-active" lang="<?= $escape($lang['language'] ?? '') ?>" aria-current="page" title="<?= $escape($lang['label'] ?? '') ?>">
+          <?php elseif (!empty($lang['available'])): ?>
+            <a href="<?= $escape($lang['href'] ?? '') ?>" lang="<?= $escape($lang['language'] ?? '') ?>"<?= !empty($lang['hreflang']) ? ' hreflang="'.$escape($lang['hreflang']).'"' : '' ?> title="<?= $escape($lang['label'] ?? '') ?>">
+          <?php else: ?>
+            <span class="language-unavailable" lang="<?= $escape($lang['language'] ?? '') ?>" aria-disabled="true" title="<?= $escape(($lang['label'] ?? '').' – '.($labels['unavailable'] ?? 'Not available in this language')) ?>">
+          <?php endif; ?>
+              <?php if ('labels' !== $presentation && !empty($lang['flag'])): ?><img src="bundles/vtinnovationscontaomultilingualpagetree/flags/<?= $escape($lang['flag']) ?>.svg" alt="<?= $escape($lang['label'] ?? '') ?>" width="24" height="16" loading="lazy"><?php endif; ?>
+              <span class="language-switcher__label<?= 'flags' === $presentation ? ' language-switcher__label--visually-hidden' : '' ?>"><?= $escape($lang['label'] ?? '') ?></span>
+              <?php if (!empty($lang['active'])): ?><span class="language-switcher__state"><?= $escape($labels['current'] ?? 'Current language') ?></span><?php elseif (empty($lang['available'])): ?><span class="language-switcher__state"><?= $escape($labels['unavailable'] ?? 'Not available in this language') ?></span><?php endif; ?>
+          <?php if (!empty($lang['available']) && empty($lang['active'])): ?></a><?php else: ?></span><?php endif; ?>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </nav>
+</div>

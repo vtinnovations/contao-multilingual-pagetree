@@ -1,0 +1,49 @@
+# Contao Multilingual Pagetree
+# Package: vtinnovations/contao-multilingual-pagetree
+# Copyright: V&T Innovations Team
+# Licence: proprietary
+# Website: https://www.v-t.one
+
+# The public path is fixed by the exchange protocol. The verb is deliberately
+# not restricted here: the handler answers a non-POST request with an explicit
+# 405 and an Allow header instead of letting the router turn it into a 404.
+contao_multilingual_pagetree_channel_update:
+    path: /rest/api/v1/contao-multilingual-pagetree-license-updater
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\ChannelUpdateController
+    defaults:
+        _format: json
+
+contao_multilingual_pagetree_root_licence_activate:
+    path: /contao-multilingual-pagetree/root/{rootId}/licence/activate
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController::activate
+    methods: [POST]
+    requirements: { rootId: '\d+' }
+    defaults: { _scope: backend }
+
+contao_multilingual_pagetree_root_licence_replace:
+    path: /contao-multilingual-pagetree/root/{rootId}/licence/replace
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController::replace
+    methods: [POST]
+    requirements: { rootId: '\d+' }
+    defaults: { _scope: backend }
+
+contao_multilingual_pagetree_root_licence_refresh:
+    path: /contao-multilingual-pagetree/root/{rootId}/licence/refresh
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController::refresh
+    methods: [POST]
+    requirements: { rootId: '\d+' }
+    defaults: { _scope: backend }
+
+contao_multilingual_pagetree_root_licence_verify:
+    path: /contao-multilingual-pagetree/root/{rootId}/licence/verify
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController::verify
+    methods: [POST]
+    requirements: { rootId: '\d+' }
+    defaults: { _scope: backend }
+
+contao_multilingual_pagetree_root_licence_remove:
+    path: /contao-multilingual-pagetree/root/{rootId}/licence/remove
+    controller: Vtinnovations\ContaoMultilingualPagetree\Controller\Backend\LicenseController::remove
+    methods: [POST]
+    requirements: { rootId: '\d+' }
+    defaults: { _scope: backend }
