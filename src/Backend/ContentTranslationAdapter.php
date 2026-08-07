@@ -18,6 +18,7 @@ use Contao\Database;
 use Contao\DataContainer;
 use Contao\Message;
 use Contao\System;
+use Psr\Log\LoggerInterface;
 use Vtinnovations\ContaoMultilingualPagetree\Content\ContentFieldRole;
 use Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationFieldPolicy;
 use Vtinnovations\ContaoMultilingualPagetree\Content\ContentTranslationBuffer;
@@ -65,6 +66,7 @@ final class ContentTranslationAdapter
         private readonly ContentValueProvenance $provenance,
         private readonly ContentTranslationBuffer $buffer,
         private readonly ?IntegrityCacheInvalidatorInterface $cache = null,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -278,6 +280,18 @@ final class ContentTranslationAdapter
         if (!$stored) {
             // A failed save is never reported as success and never silently
             // swallowed: the editor is told, and the source stays untouched.
+            // The repository has already recorded the exception itself; this
+            // adds the request-level context it cannot see, so the two records
+            // together identify which element, root and button produced it.
+            $this->logger?->error('Contao Multilingual Pagetree: a content translation was not persisted.', [
+                'source_id' => $sourceId,
+                'root_id' => $scope->rootId,
+                'language' => $language,
+                'content_type' => $contentType,
+                'approved_fields' => array_keys($approved),
+                'written_fields' => array_keys($values),
+            ]);
+
             Message::addError($this->storageFailureMessage());
 
             return;

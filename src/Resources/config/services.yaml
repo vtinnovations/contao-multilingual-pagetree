@@ -411,6 +411,8 @@ services:
     # public because Contao resolves DCA callback classes through the container.
     Vtinnovations\ContaoMultilingualPagetree\Backend\ContentTranslationAdapter:
         public: true
+        arguments:
+            $logger: '@?monolog.logger.contao_multilingual_pagetree'
 
     Vtinnovations\ContaoMultilingualPagetree\Backend\ContentTranslationSchema:
         public: true
@@ -420,6 +422,8 @@ services:
         arguments:
             $connection: '@database_connection'
             $logger: '@?monolog.logger.contao_multilingual_pagetree'
+        tags:
+            - { name: kernel.reset, method: reset }
 
     # Holds one submission's translated values between the field callbacks and
     # the record callback. Released between worker cycles.

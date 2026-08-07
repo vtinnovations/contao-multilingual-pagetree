@@ -413,6 +413,15 @@ class LanguageTabs extends Backend
      */
     private function reviewBadges(string $translationTable, int $mainId): array
     {
+        // Only a table the review workflow actually governs gets a badge. A
+        // content element is reviewed as part of the page it belongs to and
+        // holds no review state of its own, so decorating its tabs with a
+        // status would report something that is never maintained - and offer no
+        // way to act on it, because content has no "mark as reviewed" action.
+        if (!TranslationReviewDca::governs($translationTable)) {
+            return [];
+        }
+
         if ($this->reviewResolver === null || $this->reviewStorage === null || $this->reviewRenderer === null || $mainId <= 0) {
             return [];
         }

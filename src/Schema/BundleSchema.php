@@ -60,7 +60,6 @@ final class BundleSchema
         ['table' => 'tl_calendar_events_translation', 'name' => 'clfmp_review', 'columns' => ['reviewStatus'], 'unique' => false],
         ['table' => 'tl_content', 'name' => 'clfmp_owner', 'columns' => ['cmpLanguage', 'cmpLanguageRoot'], 'unique' => false],
         ['table' => 'tl_content_translation', 'name' => 'clfmp_pid_lang', 'columns' => ['pid', 'language'], 'unique' => false],
-        ['table' => 'tl_content_translation', 'name' => 'clfmp_review', 'columns' => ['reviewStatus'], 'unique' => false],
         ['table' => 'tl_faq_translation', 'name' => 'clfmp_pid_lang', 'columns' => ['pid', 'language'], 'unique' => false],
         ['table' => 'tl_faq_translation', 'name' => 'clfmp_review', 'columns' => ['reviewStatus'], 'unique' => false],
         ['table' => 'tl_inline_language', 'name' => 'clfmp_root_lang', 'columns' => ['pid', 'language'], 'unique' => false],

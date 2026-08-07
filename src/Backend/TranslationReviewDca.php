@@ -42,6 +42,34 @@ final class TranslationReviewDca
 {
     public const ACTION_KEY = 'contao_multilingual_pagetree_review';
 
+    /**
+     * The translation tables the editorial review workflow governs.
+     *
+     * This is the same set the DCA files call {@see self::configure()} for, kept
+     * here so anything that merely *decorates* review state can ask one question
+     * instead of assuming every translation has it.
+     *
+     * Content translations are deliberately absent. A content element is
+     * reviewed as part of the page it sits on, so it carries no review state of
+     * its own: no status column, no panel, no action - and therefore nothing to
+     * show on its language tabs either.
+     *
+     * @var list<string>
+     */
+    public const REVIEWED_TABLES = [
+        'tl_page_translation',
+        'tl_article_translation',
+        'tl_news_translation',
+        'tl_calendar_events_translation',
+        'tl_faq_translation',
+    ];
+
+    /** Whether the review workflow applies to a translation table at all. */
+    public static function governs(string $translationTable): bool
+    {
+        return in_array($translationTable, self::REVIEWED_TABLES, true);
+    }
+
     /** @var array<string, array<string, mixed>|null> */
     private array $sourceCache = [];
 
