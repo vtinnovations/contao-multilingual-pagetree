@@ -20,7 +20,6 @@ use Vtinnovations\ContaoMultilingualPagetree\Metadata\InstallationIdentity;
 use Vtinnovations\ContaoMultilingualPagetree\Metadata\RootScope;
 use Vtinnovations\ContaoMultilingualPagetree\Packaging\DocumentStatus;
 use Vtinnovations\ContaoMultilingualPagetree\Packaging\SealedPackage;
-use Vtinnovations\ContaoMultilingualPagetree\Packaging\ServiceTier;
 use Vtinnovations\ContaoMultilingualPagetree\Storage\PackageStoreInterface;
 use Vtinnovations\ContaoMultilingualPagetree\Storage\RootScopedPackageStore;
 
@@ -131,21 +130,25 @@ final class CapabilityPolicy
         $document = $package->document;
 
         if (DocumentStatus::Valid !== $document->status) {
-            // A revoked, suspended or invalid document may still authorise the
-            // free tier if the issuer said so; anything else grants nothing.
-            return DocumentStatus::Expired === $document->status && $document->freeAvailable
-                ? $this->freeFallback($package)
-                : CapabilityDecision::denied(CapabilityDenial::StatusNotValid, $document->boundHost, $document->version);
+            // Revoked, suspended, invalid and expired all grant nothing. There
+            // is no tier below this one to fall back to, so `free_available`
+            // cannot authorise anything here - the product is already free, and
+            // treating it as a fallback switch would turn a withdrawn
+            // entitlement back on.
+            return CapabilityDecision::denied(CapabilityDenial::StatusNotValid, $document->boundHost, $document->version);
+        }
+
+        // The product is issued for life. A document carrying an end date is
+        // structurally valid and may well be authentic, but it is not the
+        // entitlement this product is sold under, so it is refused rather than
+        // honoured until its expiry. This is checked before the start date so an
+        // incompatible term is reported as such instead of as "not yet valid".
+        if (!$document->lifetime) {
+            return CapabilityDecision::denied(CapabilityDenial::TermNotSupported, $document->boundHost, $document->version);
         }
 
         if ($now < $document->startsAt) {
             return CapabilityDecision::denied(CapabilityDenial::NotYetValid, $document->boundHost, $document->version);
-        }
-
-        if (!$document->lifetime && null !== $document->expiresAt && $now > $document->expiresAt) {
-            return $document->freeAvailable
-                ? $this->freeFallback($package)
-                : CapabilityDecision::denied(CapabilityDenial::Expired, $document->boundHost, $document->version);
         }
 
         return CapabilityDecision::granted(
@@ -155,23 +158,6 @@ final class CapabilityPolicy
             $document->version,
             $document->expiresAt,
             $document->lifetime,
-        );
-    }
-
-    /**
-     * The authorised fallback after the paid period ends: the free baseline,
-     * never the paid tier, and only when the issuer signed `free_available`.
-     */
-    private function freeFallback(SealedPackage $package): CapabilityDecision
-    {
-        return CapabilityDecision::granted(
-            ServiceTier::Free,
-            $this->capabilities(ServiceTier::Free->baselineFeatures()),
-            $package->document->boundHost,
-            $package->document->version,
-            $package->document->expiresAt,
-            false,
-            true,
         );
     }
 

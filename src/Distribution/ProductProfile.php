@@ -42,6 +42,17 @@ final class ProductProfile
     /** The only document schema version this release understands. */
     public const SCHEMA_VERSION = 2;
 
+    /**
+     * The model this product is issued under.
+     *
+     * One lifetime entitlement, free of charge, granting every feature. It is
+     * recorded here because the issuing side has to agree with it, but it is not
+     * a switch: the accepted package vocabulary lives in {@see ServiceTier} and
+     * the term rule is enforced where entitlement is decided, so changing this
+     * string alone changes nothing.
+     */
+    public const LICENCE_MODEL = 'lifetime_free';
+
     /** Exact public path of the server-initiated update endpoint. */
     public const ENDPOINT_PATH = '/rest/api/v1/'.self::PROJECT_SLUG.'-license-updater';
 

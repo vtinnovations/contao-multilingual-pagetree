@@ -42,16 +42,22 @@ Retain the displayed **Reference** when requesting help. Never include the licen
 
 Temporary service unavailability does not automatically change a previously valid local status.
 
+## Licence model
+
+One model, no variants: the licence is free of charge, issued for life, and grants every feature. A licence carrying an end date is refused rather than honoured until it runs out, and a paid package is not accepted at all.
+
+This does not make the product licence-free. Activation, signature verification, exact-domain binding and per-root scope apply exactly as they would to a paid product; only the price is zero.
+
 ## Entitlement overview
 
-| Feature | Without licence | Free | Pro |
-| --- | --- | --- | --- |
-| Create and edit additional languages | Not available | Available | Available |
-| Edit translations | Not available | Available | Available |
-| Editorial review status | Not available | Available | Available |
-| Free content mode | Not available | Not available | Pro only |
-| Integrity repair | Not available | Not available | Pro only |
-| Frontend output of existing translations | Available | Available | Available |
+| Feature | Without licence | With licence |
+| --- | --- | --- |
+| Create and edit additional languages | Not available | Available |
+| Edit translations | Not available | Available |
+| Editorial review status | Not available | Available |
+| Free content mode | Not available | Available |
+| Integrity repair | Not available | Available |
+| Frontend output of existing translations | Available | Available |
 
 The table describes administrator-visible access only.
 

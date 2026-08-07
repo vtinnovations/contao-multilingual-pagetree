@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Vtinnovations\ContaoMultilingualPagetree\Backend\ModuleEntryNotice;
 use Vtinnovations\ContaoMultilingualPagetree\Distribution\UsageSignal;
+use Vtinnovations\ContaoMultilingualPagetree\Metadata\RootScope;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\FrozenClock;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\InMemoryPackageStore;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\PackageFactory;
@@ -112,7 +113,10 @@ final class ModuleEntryNoticeTest extends TestCase
      */
     public function testTheEventUsesTheTrustedHostNotTheRecordedOne(): void
     {
-        $store = $this->activatedStore(['license_domain' => 'issued-elsewhere.example']);
+        $store = $this->activatedStore([
+            'license_domain' => 'issued-elsewhere.example',
+            'license_domains' => ['issued-elsewhere.example'],
+        ]);
 
         $request = Request::create('https://'.PackageFactory::HOST.'/contao?do=page');
         $request->setSession($this->session);
@@ -201,6 +205,7 @@ final class ModuleEntryNoticeTest extends TestCase
     public function testAnExpiredButAuthenticRecordStillEmits(): void
     {
         $store = $this->activatedStore([
+            'license_lifetime' => false,
             'license_expires_at' => PackageFactory::NOW - 10,
             'validation_status' => 'expired',
         ]);
@@ -209,6 +214,70 @@ final class ModuleEntryNoticeTest extends TestCase
         $this->signal->deliverQueuedModuleEntry();
 
         self::assertCount(1, $this->transport->signals);
+    }
+
+    /**
+     * Entitlement is per website root and each root carries its own key, so
+     * entering a second root's section in the same session is a second entry.
+     */
+    public function testEachRootClaimsItsOwnEntryWithinOneSession(): void
+    {
+        $store = $this->activatedStore();
+
+        // One entry is queued per request, so two roots means two requests.
+        $this->scopedNotice($store, 11)->noteEntry();
+        $this->signal->deliverQueuedModuleEntry();
+
+        $this->scopedNotice($store, 12)->noteEntry();
+        $this->signal->deliverQueuedModuleEntry();
+
+        self::assertCount(2, $this->transport->signals);
+    }
+
+    /** ...but one root still claims only once, however often it is re-entered. */
+    public function testOneRootStillClaimsOnlyOncePerSession(): void
+    {
+        $store = $this->activatedStore();
+
+        foreach ([1, 2, 3] as $ignored) {
+            $this->scopedNotice($store, 11)->noteEntry();
+            $this->signal->deliverQueuedModuleEntry();
+        }
+
+        self::assertCount(1, $this->transport->signals);
+    }
+
+    /** The claim marker carries a bare flag and nothing derived from the key. */
+    public function testTheClaimMarkerHoldsNoPayload(): void
+    {
+        $store = $this->activatedStore();
+        $this->scopedNotice($store, 11)->noteEntry();
+
+        foreach ($this->session->all() as $name => $value) {
+            self::assertTrue($value, $name);
+            self::assertStringNotContainsString('CMP-TEST', $name);
+            self::assertStringNotContainsString(PackageFactory::HOST, $name);
+        }
+    }
+
+    private function scopedNotice(InMemoryPackageStore $store, int $rootId): ModuleEntryNotice
+    {
+        $request = Request::create('https://'.PackageFactory::HOST.'/contao?do=page');
+        $request->setSession($this->session);
+        $stack = new RequestStack();
+        $stack->push($request);
+
+        $scope = new RootScope();
+        $scope->select($rootId, PackageFactory::HOST);
+
+        return new ModuleEntryNotice(
+            $this->signal,
+            $store,
+            $this->factory->identity($store),
+            new FrozenClock(PackageFactory::NOW),
+            $stack,
+            $scope,
+        );
     }
 
     /** Without a server-side session "once per session" cannot be guaranteed. */

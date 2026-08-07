@@ -38,11 +38,18 @@ enum CapabilityDenial: string
     /** The period has not started yet. */
     case NotYetValid = 'not_yet_valid';
 
-    /** The period ended and no free fallback is authorised. */
-    case Expired = 'expired';
-
     /** The issuer signed a non-valid status into the document. */
     case StatusNotValid = 'status_not_valid';
+
+    /**
+     * Authentic state whose term is not the one this product is issued under.
+     *
+     * This product has a single lifetime entitlement, so a document carrying an
+     * end date is refused outright rather than honoured until that date. The
+     * state itself is untouched, so replacing it with a correctly issued
+     * document is all that is needed.
+     */
+    case TermNotSupported = 'term_not_supported';
 
     /**
      * Authentic state that predates the signed host set.

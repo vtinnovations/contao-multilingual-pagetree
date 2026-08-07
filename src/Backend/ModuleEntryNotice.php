@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Vtinnovations\ContaoMultilingualPagetree\Distribution\UsageSignal;
 use Vtinnovations\ContaoMultilingualPagetree\Helper\Clock;
 use Vtinnovations\ContaoMultilingualPagetree\Metadata\InstallationIdentity;
+use Vtinnovations\ContaoMultilingualPagetree\Metadata\RootScope;
 use Vtinnovations\ContaoMultilingualPagetree\Storage\PackageStoreInterface;
 
 /**
@@ -29,12 +30,15 @@ use Vtinnovations\ContaoMultilingualPagetree\Storage\PackageStoreInterface;
  * never from a kernel listener, a frontend request, a console command, a worker
  * or a service constructor.
  *
- * Deduplication uses Contao's own server-side backend session. A session marker
+ * Deduplication uses Contao's own server-side backend session, per website root:
+ * entitlement is scoped to a root and each root carries its own key, so entering
+ * the section of a second root in the same session is a second entry. A marker
  * is claimed *before* delivery is scheduled, so parallel tabs, a reload, an AJAX
- * request or a second node cannot produce a second event, and a delivery that
- * times out is not retried within that session. The marker holds a bare boolean:
- * no key, no host, no session identifier and no payload. It disappears with the
- * session, so a new login may emit once again.
+ * request or a second node cannot produce a second event for the same root, and
+ * a delivery that times out is not retried within that session. The marker holds
+ * a bare boolean under a name carrying only the root id: no key, no host, no
+ * session identifier and no payload. It disappears with the session, so a new
+ * login may emit once again.
  *
  * The key comes only from the locally verified record - {@see
  * PackageStoreInterface::load()} returns nothing unless every signature and the
@@ -50,8 +54,8 @@ use Vtinnovations\ContaoMultilingualPagetree\Storage\PackageStoreInterface;
 final class ModuleEntryNotice
 {
     /**
-     * Neutral session key. It says nothing about what it guards and holds no
-     * payload of its own.
+     * Neutral session key prefix. It says nothing about what it guards and
+     * holds no payload of its own.
      */
     private const MARKER = 'contao_multilingual_pagetree.entry';
 
@@ -61,6 +65,7 @@ final class ModuleEntryNotice
         private readonly InstallationIdentity $identity,
         private readonly Clock $clock,
         private readonly ?RequestStack $requestStack = null,
+        private readonly ?RootScope $scope = null,
     ) {
     }
 
@@ -93,7 +98,9 @@ final class ModuleEntryNotice
             return;
         }
 
-        if (true === $session->get(self::MARKER)) {
+        $marker = $this->marker();
+
+        if (true === $session->get($marker)) {
             return;
         }
 
@@ -108,9 +115,28 @@ final class ModuleEntryNotice
 
         // Claimed before delivery is even scheduled. PHP serialises requests of
         // one session, so a parallel tab reaching this line finds the marker set.
-        $session->set(self::MARKER, true);
+        $session->set($marker, true);
 
         $this->signal->queueModuleEntry($host, $key);
+    }
+
+    /**
+     * The session key this entry claims.
+     *
+     * Entitlement here is per website root, and each root carries its own key,
+     * so the claim is per root as well: an administrator who opens the section
+     * of two roots in one session is entering two separately licensed sections,
+     * and the issuer needs to see both. A single session-wide marker would
+     * silently drop the second.
+     *
+     * Only the root id goes into the name - never the key, the host, the session
+     * identifier or anything derived from them.
+     */
+    private function marker(): string
+    {
+        $rootId = $this->scope?->rootId() ?? 0;
+
+        return $rootId > 0 ? self::MARKER.'.'.$rootId : self::MARKER;
     }
 
     private function session(): ?\Symfony\Component\HttpFoundation\Session\SessionInterface

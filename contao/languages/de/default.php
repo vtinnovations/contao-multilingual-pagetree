@@ -141,7 +141,7 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeLicence'] = [
     'remove' => 'Lizenz entfernen',
     'removeConfirm' => 'Gespeicherte Lizenz entfernen? Mehrsprachige Daten bleiben unverändert.',
     'statuses' => [
-        'granted' => 'Aktiv', 'granted_free_fallback' => 'Aktiv', 'not_activated' => 'Nicht aktiviert',
+        'granted' => 'Aktiv', 'not_activated' => 'Nicht aktiviert',
         'state_unusable' => 'Ungültige Lizenz', 'host_mismatch' => 'Falsche Domain', 'host_unknown' => 'Domain nicht verfügbar',
         'not_yet_valid' => 'Noch nicht gültig', 'expired' => 'Abgelaufen', 'status_not_valid' => 'Ungültige Lizenz',
         'verification_unavailable' => 'Prüfung nicht verfügbar',
@@ -168,12 +168,12 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeRootLicence'] = [
     'refresh' => 'Lizenz aktualisieren', 'verify' => 'Lizenz prüfen', 'remove' => 'Lizenz entfernen',
     'removeConfirm' => 'Entfernen der Lizenz bestätigen? Mehrsprachige Daten bleiben unverändert.',
     'statuses' => [
-        'granted' => 'Aktiv', 'granted_free_fallback' => 'Aktiv', 'not_activated' => 'Nicht aktiviert',
+        'granted' => 'Aktiv', 'not_activated' => 'Nicht aktiviert',
         'state_unusable' => 'Ungültige Lizenz', 'host_mismatch' => 'Falsche Domain', 'host_unknown' => 'Fehlende Domain',
         'wrong_project' => 'Falsches Projekt', 'wrong_package' => 'Falsches Paket', 'signature_invalid' => 'Ungültige Signatur',
         'tampered' => 'Lizenz manipuliert', 'not_yet_valid' => 'Noch nicht gültig', 'expired' => 'Abgelaufen',
         'status_not_valid' => 'Ungültige Lizenz', 'verification_unavailable' => 'Prüfung nicht verfügbar',
-        'refresh_required' => 'Aktualisierung erforderlich',
+        'refresh_required' => 'Aktualisierung erforderlich', 'term_not_supported' => 'Nicht unterstützte Lizenzlaufzeit',
     ],
     'messages' => [
         'applied' => 'Lizenz aktiviert.', 'unchanged' => 'Lizenz aktualisiert.', 'already_current' => 'Lizenz aktualisiert.',
@@ -185,7 +185,7 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeRootLicence'] = [
         'wrongDomain' => 'Die Lizenz stimmt nicht mit der exakten Domain dieses Startpunkts überein.', 'invalid' => 'Ungültige Lizenz.',
         'missing_key' => 'Geben Sie einen Lizenzschlüssel ein.', 'invalid_key' => 'Der Lizenzschlüssel ist ungültig.',
         'wrong_domain' => 'Die Lizenz stimmt nicht mit der exakten Domain dieses Startpunkts überein.',
-        'wrong_project' => 'Die Lizenz gehört zu einem anderen Projekt.', 'wrong_package' => 'Das Lizenzpaket wird von diesem Produkt nicht unterstützt.',
+        'wrong_project' => 'Die Lizenz gehört zu einem anderen Projekt.', 'wrong_package' => 'Dies ist nicht die lebenslange Lizenz, die dieses Produkt benötigt.',
         'not_yet_valid' => 'Die Lizenz ist noch nicht gültig.', 'expired' => 'Die Lizenz ist abgelaufen.',
         'malformed_response' => 'Der Lizenzdienst hat eine fehlerhafte Antwort geliefert.',
         'unsupported_schema' => 'Die Lizenzantwort verwendet eine nicht unterstützte Protokollversion.',

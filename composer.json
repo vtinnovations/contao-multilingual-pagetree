@@ -1,8 +1,9 @@
 {
     "name": "vtinnovations/contao-multilingual-pagetree",
-    "description": "A unified multilingual page-tree workflow for Contao with connected and free content translation modes.",
+    "description": "Updates ohne Angstschweiß. Guardian macht Contao-Updates, automatische Backups und Notfall-Wiederherstellung zum Ein-Klick-Vorgang — inklusive Standalone-Recovery-Panel, das selbst dann noch funktioniert, wenn Contao nicht mehr startet.",
     "type": "contao-bundle",
     "license": "proprietary",
+    "version": "dev-main",
     "keywords": [
         "contao",
         "contao-bundle",

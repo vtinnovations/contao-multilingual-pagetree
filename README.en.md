@@ -132,14 +132,16 @@ Every write operation is checked server side. A control hidden in the form is no
 
 The package requires a valid licence per website root. The exact configured domain of that root is authoritative.
 
-| Feature | Without licence | Free | Pro |
-| --- | --- | --- | --- |
-| Create and edit additional languages | Not available | Available | Available |
-| Edit translations | Not available | Available | Available |
-| Editorial review status | Not available | Available | Available |
-| Free content mode | Not available | Not available | Pro only |
-| Integrity repair | Not available | Not available | Pro only |
-| Frontend output of existing translations | Available | Available | Available |
+The licence is free of charge and issued for life, and it unlocks every feature: there is no paid tier and no time-limited tier. Free of charge is not licence-free, though — until a licence is activated on a root, that root's multilingual management stays unavailable.
+
+| Feature | Without licence | With licence |
+| --- | --- | --- |
+| Create and edit additional languages | Not available | Available |
+| Edit translations | Not available | Available |
+| Editorial review status | Not available | Available |
+| Free content mode | Not available | Available |
+| Integrity repair | Not available | Available |
+| Frontend output of existing translations | Available | Available |
 
 Operation, states and error handling: [licence management](docs/PRODUCT-REGISTRATION.en.md).
 

@@ -43,7 +43,7 @@ final class PackageReaderTest extends TestCase
         $sealed = $this->factory->reader()->readPackage($package['payload'], $package['integrity'], self::NOW);
 
         self::assertSame($package['bytes'], $sealed->bytes, 'The exact bytes must be preserved, never re-serialised.');
-        self::assertSame(ServiceTier::Pro, $sealed->document->tier);
+        self::assertSame(ServiceTier::Free, $sealed->document->tier);
         self::assertSame('example.com', $sealed->document->boundHost);
         self::assertSame(7, $sealed->document->version);
     }
@@ -62,8 +62,10 @@ final class PackageReaderTest extends TestCase
     {
         $package = $this->factory->wirePackage();
         $fields = json_decode($package['bytes'], true);
-        $fields['license_package'] = 'pro';
-        $fields['license_domain'] = 'attacker.test';
+
+        // A structurally valid edit on purpose: it must be the signature that
+        // stops this, not a shape check the attacker could simply have avoided.
+        $fields['license_version'] = 99;
         $edited = json_encode($fields, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         // The attacker also recalculates the digest, but cannot re-sign the seal.
@@ -154,7 +156,7 @@ final class PackageReaderTest extends TestCase
         yield 'ip host' => [['license_domain' => '192.0.2.10']];
         yield 'non lifetime without expiry' => [['license_lifetime' => false, 'license_expires_at' => null]];
         yield 'lifetime with expiry' => [['license_lifetime' => true, 'license_expires_at' => 1787472547]];
-        yield 'expiry before start' => [['license_expires_at' => 1]];
+        yield 'expiry before start' => [['license_lifetime' => false, 'license_expires_at' => 1]];
         yield 'string version' => [['license_version' => '7']];
         yield 'float timestamp' => [['license_issued_at' => 1784794147.0]];
         yield 'feature list as map' => [['license_features' => ['a' => 'b']]];
@@ -164,13 +166,33 @@ final class PackageReaderTest extends TestCase
 
     public function testALifetimeDocumentIsAccepted(): void
     {
-        $sealed = $this->factory->sealedPackage([
-            'license_lifetime' => true,
-            'license_expires_at' => null,
-        ]);
+        $sealed = $this->factory->sealedPackage();
 
         self::assertTrue($sealed->document->lifetime);
         self::assertNull($sealed->document->expiresAt);
+        self::assertSame(ServiceTier::Free, $sealed->document->tier);
+    }
+
+    /**
+     * A package this product is not issued under is refused while the document
+     * is still being parsed, so it can never reach an entitlement decision.
+     *
+     * @dataProvider foreignPackages
+     */
+    public function testAPackageThisProductIsNotSoldUnderIsRefused(string $package): void
+    {
+        $this->expectException(PackageFormatException::class);
+        $this->factory->sealedPackage(['license_package' => $package]);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function foreignPackages(): iterable
+    {
+        yield 'paid tier' => ['pro'];
+        yield 'trial tier' => ['trial'];
+        yield 'enterprise tier' => ['enterprise'];
     }
 
     public function testStoredStateIsReVerifiedOnEveryRead(): void
@@ -187,14 +209,15 @@ final class PackageReaderTest extends TestCase
 
     public function testGrantedFeaturesAreTheUnionOfTierAndSignedList(): void
     {
-        $free = $this->factory->sealedPackage([
-            'license_package' => 'free',
-            'license_features' => ['integrity_repair'],
+        $package = $this->factory->sealedPackage([
+            'license_features' => ['integrity_repair', 'a_later_feature'],
         ]);
 
+        // `integrity_repair` is already in the baseline and must not be repeated;
+        // an identifier outside it is appended, so the result is a real union.
         self::assertSame(
-            ['translation_editing', 'translation_review', 'integrity_repair'],
-            $free->document->grantedFeatures(),
+            ['translation_editing', 'translation_review', 'free_content_mode', 'integrity_repair', 'a_later_feature'],
+            $package->document->grantedFeatures(),
         );
     }
 }

@@ -230,6 +230,32 @@ the `main` branch and will form the first release notes.
 
 ### Changed
 
+- **The product is now issued under one licence model: free of charge, for life,
+  granting every feature.** There is no paid tier and no time-limited tier any
+  more. `free` is the only accepted package value, and its baseline now carries
+  all four capabilities, so free content mode and integrity repair no longer sit
+  behind a tier this product does not sell. Free of charge is deliberately not
+  licence-free: activation, signature verification, exact-domain binding and
+  per-root scope are unchanged, and an installation that has activated nothing
+  still gets nothing.
+  - A document carrying an end date is refused outright rather than honoured
+    until it runs out. It is rejected at activation, so it is never written, and
+    rejected again at the entitlement gate, so a copy arriving through the
+    server-initiated updater cannot grant anything either. The administrator
+    sees the new `term_not_supported` category.
+  - The expired-tier free fallback is gone with the tier it fell back to. A
+    withdrawn entitlement now stays withdrawn: `free_available` can no longer
+    turn one back on, because this product's only tier *is* the free one. The
+    unreachable `expired` capability denial and the `granted_free_fallback`
+    status were removed rather than left as dead vocabulary.
+- **The module-entry signal is claimed per website root, not per session.**
+  Entitlement is scoped to a root and each root carries its own key, so opening
+  the licence section of a second root in one backend session is a second entry;
+  a single session-wide marker silently dropped it. The marker still holds a
+  bare flag under a name carrying only the root id - never the key, the host or
+  anything derived from them.
+
+
 - **The public documentation was rewritten with German as the default language
   and English as the alternate.** `README.md` is German and `README.en.md` is
   its full English equivalent; each links to the other. The runbook and the

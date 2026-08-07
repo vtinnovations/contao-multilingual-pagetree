@@ -38,13 +38,12 @@ final class CapabilityDecision
         public readonly ?int $version,
         public readonly ?int $expiresAt,
         public readonly bool $lifetime,
-        public readonly bool $freeFallback,
     ) {
     }
 
     public static function denied(CapabilityDenial $denial, ?string $boundHost = null, ?int $version = null): self
     {
-        return new self(false, null, [], $denial, $boundHost, $version, null, false, false);
+        return new self(false, null, [], $denial, $boundHost, $version, null, false);
     }
 
     /**
@@ -57,9 +56,8 @@ final class CapabilityDecision
         int $version,
         ?int $expiresAt,
         bool $lifetime,
-        bool $freeFallback = false,
     ): self {
-        return new self(true, $tier, array_values($capabilities), null, $boundHost, $version, $expiresAt, $lifetime, $freeFallback);
+        return new self(true, $tier, array_values($capabilities), null, $boundHost, $version, $expiresAt, $lifetime);
     }
 
     public function allows(Capability $capability): bool
@@ -74,6 +72,6 @@ final class CapabilityDecision
             return $this->denial?->value ?? CapabilityDenial::StateUnusable->value;
         }
 
-        return $this->freeFallback ? 'granted_free_fallback' : 'granted';
+        return 'granted';
     }
 }

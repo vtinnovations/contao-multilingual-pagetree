@@ -39,17 +39,31 @@ final class CapabilityPolicyTest extends TestCase
         $this->factory = new PackageFactory();
     }
 
-    public function testAValidPaidStateGrantsEveryCapability(): void
+    /**
+     * The product has one entitlement and it withholds nothing. A "free" tier
+     * here is a price, not a reduced feature set.
+     */
+    public function testTheLifetimeFreeStateGrantsEveryCapability(): void
     {
         $decision = $this->policy()->decision();
 
         self::assertTrue($decision->granted);
-        self::assertSame(ServiceTier::Pro, $decision->tier);
-        self::assertFalse($decision->freeFallback);
+        self::assertSame(ServiceTier::Free, $decision->tier);
+        self::assertTrue($decision->lifetime);
+        self::assertNull($decision->expiresAt);
 
         foreach (Capability::cases() as $capability) {
             self::assertTrue($decision->allows($capability), $capability->value);
         }
+    }
+
+    /** `free` is the only package this product accepts. */
+    public function testAPaidPackageIsNotAcceptedByThisProduct(): void
+    {
+        self::assertNull(ServiceTier::tryFromValue('pro'));
+        self::assertNull(ServiceTier::tryFromValue('trial'));
+        self::assertSame(ServiceTier::Free, ServiceTier::tryFromValue('free'));
+        self::assertSame([ServiceTier::Free], ServiceTier::cases());
     }
 
     public function testNothingIsGrantedBeforeActivation(): void
@@ -142,51 +156,56 @@ final class CapabilityPolicyTest extends TestCase
         self::assertSame(0, $store->writes);
     }
 
-    public function testAnExpiredStateFallsBackToFreeWhenAuthorised(): void
+    /**
+     * A time-limited document is refused outright rather than honoured until it
+     * runs out, whether it is still inside its window or already past it. There
+     * is no tier below this product's, so `free_available` cannot rescue it.
+     *
+     * @dataProvider timeLimitedDocuments
+     */
+    public function testATimeLimitedStateIsRefusedWhateverItsWindow(int $expiresAt, bool $freeAvailable): void
     {
         $decision = $this->policy([
-            'license_expires_at' => self::NOW - 10,
-            'free_available' => true,
-        ])->decision();
-
-        self::assertTrue($decision->granted);
-        self::assertTrue($decision->freeFallback);
-        self::assertSame(ServiceTier::Free, $decision->tier);
-        self::assertTrue($decision->allows(Capability::TranslationEditing));
-        self::assertFalse($decision->allows(Capability::FreeContentMode));
-        self::assertFalse($decision->allows(Capability::IntegrityRepair));
-    }
-
-    public function testAnExpiredStateWithoutFallbackGrantsNothing(): void
-    {
-        $decision = $this->policy([
-            'license_expires_at' => self::NOW - 10,
-            'free_available' => false,
+            'license_lifetime' => false,
+            'license_expires_at' => $expiresAt,
+            'free_available' => $freeAvailable,
         ])->decision();
 
         self::assertFalse($decision->granted);
-        self::assertSame(CapabilityDenial::Expired, $decision->denial);
+        self::assertSame(CapabilityDenial::TermNotSupported, $decision->denial);
+
+        foreach (Capability::cases() as $capability) {
+            self::assertFalse($decision->allows($capability), $capability->value);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{int, bool}>
+     */
+    public static function timeLimitedDocuments(): iterable
+    {
+        yield 'still running, fallback offered' => [self::NOW + 2592000, true];
+        yield 'still running, no fallback' => [self::NOW + 2592000, false];
+        yield 'already over, fallback offered' => [self::NOW - 10, true];
+        yield 'already over, no fallback' => [self::NOW - 10, false];
     }
 
     public function testAStateThatHasNotStartedYetGrantsNothing(): void
     {
         $decision = $this->policy([
             'license_starts_at' => self::NOW + 100,
-            'license_expires_at' => self::NOW + 10000,
         ])->decision();
 
         self::assertSame(CapabilityDenial::NotYetValid, $decision->denial);
     }
 
-    public function testALifetimeStateNeverExpires(): void
+    public function testTheLifetimeStateNeverExpires(): void
     {
-        $policy = $this->policy([
-            'license_lifetime' => true,
-            'license_expires_at' => null,
-        ], PackageFactory::HOST, self::NOW + 10 * 365 * 86400);
+        $policy = $this->policy([], PackageFactory::HOST, self::NOW + 10 * 365 * 86400);
 
         self::assertTrue($policy->decision()->granted);
         self::assertTrue($policy->decision()->lifetime);
+        self::assertTrue($policy->decision()->allows(Capability::IntegrityRepair));
     }
 
     /**
@@ -210,15 +229,19 @@ final class CapabilityPolicyTest extends TestCase
         yield 'invalid' => ['invalid'];
     }
 
-    public function testAnExpiredStatusUsesTheAuthorisedFreeFallback(): void
+    /**
+     * A withdrawn entitlement stays withdrawn. `free_available` must not turn it
+     * back on, because this product's only tier *is* the free one.
+     */
+    public function testAnExpiredStatusGrantsNothingEvenWithFallbackOffered(): void
     {
         $decision = $this->policy([
             'validation_status' => 'expired',
             'free_available' => true,
         ])->decision();
 
-        self::assertTrue($decision->granted);
-        self::assertTrue($decision->freeFallback);
+        self::assertFalse($decision->granted);
+        self::assertSame(CapabilityDenial::StatusNotValid, $decision->denial);
     }
 
     /**
@@ -291,15 +314,11 @@ final class CapabilityPolicyTest extends TestCase
     public function testUnknownFeatureIdentifiersAreIgnored(): void
     {
         $decision = $this->policy([
-            'license_package' => 'free',
             'license_features' => ['some_future_feature'],
         ])->decision();
 
         self::assertTrue($decision->granted);
-        self::assertSame(
-            [Capability::TranslationEditing, Capability::TranslationReview],
-            $decision->capabilities,
-        );
+        self::assertSame(Capability::cases(), $decision->capabilities);
     }
 
     /**

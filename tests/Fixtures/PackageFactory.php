@@ -104,13 +104,16 @@ final class PackageFactory
             // second entry is a different identity, not a wider one.
             'license_domains' => [self::HOST, self::SECOND_HOST],
             'license_max_domains' => 3,
-            'license_package' => 'pro',
+            // The one entitlement this product is issued under: free of charge,
+            // for life, granting everything. Tests that need an incompatible
+            // document override these three fields explicitly.
+            'license_package' => 'free',
             'license_features' => [],
             'license_version' => 7,
             'license_issued_at' => self::NOW - 86400,
             'license_starts_at' => self::NOW - 86400,
-            'license_expires_at' => self::NOW + 2592000,
-            'license_lifetime' => false,
+            'license_expires_at' => null,
+            'license_lifetime' => true,
             'license_verified_at' => self::NOW,
             'free_available' => true,
             'signature' => 'placeholder',

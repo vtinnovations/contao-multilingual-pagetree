@@ -141,7 +141,7 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeLicence'] = [
     'remove' => 'Remove licence',
     'removeConfirm' => 'Remove the stored licence? Existing multilingual data remains untouched.',
     'statuses' => [
-        'granted' => 'Active', 'granted_free_fallback' => 'Active free fallback', 'not_activated' => 'Not activated',
+        'granted' => 'Active', 'not_activated' => 'Not activated',
         'state_unusable' => 'Invalid licence', 'host_mismatch' => 'Wrong domain', 'host_unknown' => 'Domain unavailable',
         'not_yet_valid' => 'Not yet valid', 'expired' => 'Expired', 'status_not_valid' => 'Invalid licence',
         'verification_unavailable' => 'Verification unavailable',
@@ -168,12 +168,12 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeRootLicence'] = [
     'refresh' => 'Refresh licence', 'verify' => 'Verify licence', 'remove' => 'Remove licence',
     'removeConfirm' => 'Confirm licence removal? Existing multilingual data remains untouched.',
     'statuses' => [
-        'granted' => 'Active', 'granted_free_fallback' => 'Active', 'not_activated' => 'Not activated',
+        'granted' => 'Active', 'not_activated' => 'Not activated',
         'state_unusable' => 'Invalid licence', 'host_mismatch' => 'Wrong domain', 'host_unknown' => 'Missing domain',
         'wrong_project' => 'Wrong project', 'wrong_package' => 'Wrong package', 'signature_invalid' => 'Signature invalid',
         'tampered' => 'Licence tampered', 'not_yet_valid' => 'Not yet valid', 'expired' => 'Expired',
         'status_not_valid' => 'Invalid licence', 'verification_unavailable' => 'Verification unavailable',
-        'refresh_required' => 'Refresh required',
+        'refresh_required' => 'Refresh required', 'term_not_supported' => 'Unsupported licence term',
     ],
     'messages' => [
         'applied' => 'Licence activated.', 'unchanged' => 'Licence refreshed.', 'already_current' => 'Licence refreshed.',
@@ -185,7 +185,7 @@ $GLOBALS['TL_LANG']['MSC']['contaoMultilingualPagetreeRootLicence'] = [
         'wrongDomain' => 'The licence does not match this root page’s exact domain.', 'invalid' => 'Invalid licence.',
         'missing_key' => 'Enter a licence key.', 'invalid_key' => 'The licence key is invalid.',
         'wrong_domain' => 'The licence does not match this root page’s exact domain.',
-        'wrong_project' => 'The licence belongs to another project.', 'wrong_package' => 'The licence package is not supported by this product.',
+        'wrong_project' => 'The licence belongs to another project.', 'wrong_package' => 'This licence is not the lifetime licence this product requires.',
         'not_yet_valid' => 'The licence is not valid yet.', 'expired' => 'The licence has expired.',
         'malformed_response' => 'The licence service returned a malformed response.',
         'unsupported_schema' => 'The licence response uses an unsupported protocol version.',

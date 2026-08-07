@@ -393,6 +393,7 @@ services:
     Vtinnovations\ContaoMultilingualPagetree\Backend\ModuleEntryNotice:
         arguments:
             $requestStack: '@request_stack'
+            $scope: '@Vtinnovations\ContaoMultilingualPagetree\Metadata\RootScope'
 
     Vtinnovations\ContaoMultilingualPagetree\Backend\RootLicenseDca:
         public: true

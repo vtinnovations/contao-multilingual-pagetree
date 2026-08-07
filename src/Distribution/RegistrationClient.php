@@ -264,11 +264,17 @@ final class RegistrationClient
             return RegistrationOutcome::failure(RegistrationOutcome::WRONG_DOMAIN, $requestId);
         }
 
+        // This product is issued for life, so a document carrying an end date is
+        // refused before it is ever written. Rejecting here rather than only at
+        // the entitlement gate is what keeps an administrator from activating a
+        // licence that would appear to succeed and then grant nothing. State
+        // already on disk is left untouched by a refused activation.
+        if (!$package->document->lifetime) {
+            return RegistrationOutcome::failure(RegistrationOutcome::WRONG_PACKAGE, $requestId);
+        }
+
         if ($package->document->startsAt > $now) {
             return RegistrationOutcome::failure(RegistrationOutcome::NOT_YET_VALID, $requestId);
-        }
-        if (!$package->document->lifetime && null !== $package->document->expiresAt && $package->document->expiresAt <= $now) {
-            return RegistrationOutcome::failure(RegistrationOutcome::EXPIRED, $requestId);
         }
         if ('expired' === $package->document->status->value) {
             return RegistrationOutcome::failure(RegistrationOutcome::EXPIRED, $requestId);

@@ -38,10 +38,13 @@ final class CanonicalInputTest extends TestCase
 
         $document = PackageDocument::fromArray($fields, new CanonicalHost());
 
+        // The product's own entitlement, in canonical form: keys sorted
+        // bytewise, list order preserved, and `null`/`true` kept as the scalars
+        // they are rather than coerced to 0 and "true".
         $expected = '{"free_available":true,"license_domain":"example.com",'
-            .'"license_domains":["example.com","staging.example.com"],"license_expires_at":1787472547,'
+            .'"license_domains":["example.com","staging.example.com"],"license_expires_at":null,'
             .'"license_features":[],"license_issued_at":1784794147,"license_key":"CMP-TEST-0000-0000",'
-            .'"license_lifetime":false,"license_max_domains":3,"license_package":"pro","license_starts_at":1784794147,'
+            .'"license_lifetime":true,"license_max_domains":3,"license_package":"free","license_starts_at":1784794147,'
             .'"license_verified_at":1784880547,"license_version":7,"project":"Contao Multilingual Pagetree",'
             .'"project_slug":"contao-multilingual-pagetree","schema_version":2,"validation_status":"valid"}';
 

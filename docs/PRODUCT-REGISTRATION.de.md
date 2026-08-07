@@ -42,16 +42,22 @@ Notieren Sie bei Bedarf die angezeigte **Referenz**. Geben Sie niemals den Lizen
 
 Eine vorübergehende Nichterreichbarkeit ändert einen zuvor gültigen lokalen Status nicht automatisch.
 
+## Lizenzmodell
+
+Ein Modell ohne Varianten: Die Lizenz ist kostenlos, wird lebenslang ausgestellt und gewährt den vollen Funktionsumfang. Eine befristete Lizenz wird abgewiesen, statt bis zum Ablauf akzeptiert zu werden, und ein kostenpflichtiges Paket wird gar nicht angenommen.
+
+Lizenzfrei ist das Produkt damit nicht. Aktivierung, Signaturprüfung, exakte Domain-Bindung und die Begrenzung auf den jeweiligen Startpunkt gelten unverändert wie bei einem kostenpflichtigen Produkt; nur der Preis ist null.
+
 ## Berechtigungsübersicht
 
-| Funktion | Ohne Lizenz | Free | Pro |
-| --- | --- | --- | --- |
-| Zusätzliche Sprachen anlegen und bearbeiten | Nicht verfügbar | Verfügbar | Verfügbar |
-| Übersetzungen bearbeiten | Nicht verfügbar | Verfügbar | Verfügbar |
-| Redaktioneller Prüfstatus | Nicht verfügbar | Verfügbar | Verfügbar |
-| Freier Inhaltsmodus | Nicht verfügbar | Nicht verfügbar | Nur Pro |
-| Integritätsreparatur | Nicht verfügbar | Nicht verfügbar | Nur Pro |
-| Frontend-Ausgabe bestehender Übersetzungen | Verfügbar | Verfügbar | Verfügbar |
+| Funktion | Ohne Lizenz | Mit Lizenz |
+| --- | --- | --- |
+| Zusätzliche Sprachen anlegen und bearbeiten | Nicht verfügbar | Verfügbar |
+| Übersetzungen bearbeiten | Nicht verfügbar | Verfügbar |
+| Redaktioneller Prüfstatus | Nicht verfügbar | Verfügbar |
+| Freier Inhaltsmodus | Nicht verfügbar | Verfügbar |
+| Integritätsreparatur | Nicht verfügbar | Verfügbar |
+| Frontend-Ausgabe bestehender Übersetzungen | Verfügbar | Verfügbar |
 
 Die Tabelle beschreibt ausschließlich den für Administratoren sichtbaren Zugriff.
 

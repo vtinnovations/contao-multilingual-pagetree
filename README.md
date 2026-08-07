@@ -132,14 +132,16 @@ Alle schreibenden Vorgänge werden serverseitig geprüft. Eine im Formular ausge
 
 Das Paket benötigt eine gültige Lizenz je Website-Startpunkt. Maßgeblich ist die exakt konfigurierte Domain des Startpunkts.
 
-| Funktion | Ohne Lizenz | Free | Pro |
-| --- | --- | --- | --- |
-| Zusätzliche Sprachen anlegen und bearbeiten | Nicht verfügbar | Verfügbar | Verfügbar |
-| Übersetzungen bearbeiten | Nicht verfügbar | Verfügbar | Verfügbar |
-| Redaktioneller Prüfstatus | Nicht verfügbar | Verfügbar | Verfügbar |
-| Freier Inhaltsmodus | Nicht verfügbar | Nicht verfügbar | Nur Pro |
-| Integritätsreparatur | Nicht verfügbar | Nicht verfügbar | Nur Pro |
-| Frontend-Ausgabe bestehender Übersetzungen | Verfügbar | Verfügbar | Verfügbar |
+Die Lizenz ist kostenlos, wird lebenslang ausgestellt und schaltet den vollen Funktionsumfang frei: Es gibt weder eine kostenpflichtige noch eine befristete Stufe. Kostenlos ist jedoch nicht lizenzfrei — solange an einem Startpunkt keine Lizenz aktiviert ist, bleibt dessen mehrsprachige Verwaltung gesperrt.
+
+| Funktion | Ohne Lizenz | Mit Lizenz |
+| --- | --- | --- |
+| Zusätzliche Sprachen anlegen und bearbeiten | Nicht verfügbar | Verfügbar |
+| Übersetzungen bearbeiten | Nicht verfügbar | Verfügbar |
+| Redaktioneller Prüfstatus | Nicht verfügbar | Verfügbar |
+| Freier Inhaltsmodus | Nicht verfügbar | Verfügbar |
+| Integritätsreparatur | Nicht verfügbar | Verfügbar |
+| Frontend-Ausgabe bestehender Übersetzungen | Verfügbar | Verfügbar |
 
 Bedienung, Zustände und Fehlerbehandlung: [Lizenzverwaltung](docs/PRODUCT-REGISTRATION.de.md).
 

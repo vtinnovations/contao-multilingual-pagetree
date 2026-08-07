@@ -91,7 +91,7 @@ final class FilesystemPackageStoreTest extends TestCase
         $this->store->store($this->factory->sealedPackage(), PackageFactory::HOST, self::NOW);
 
         $path = $this->directory.'/license.json';
-        file_put_contents($path, str_replace('"license_package":"pro"', '"license_package":"pro" ', (string) file_get_contents($path)));
+        file_put_contents($path, str_replace('"license_package":"free"', '"license_package":"free" ', (string) file_get_contents($path)));
 
         self::assertNull($this->store->load(self::NOW), 'Tampered state must read as unusable.');
         self::assertTrue($this->store->exists(), 'It is reported, not silently deleted.');
