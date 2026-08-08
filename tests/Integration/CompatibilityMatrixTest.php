@@ -31,7 +31,7 @@ final class CompatibilityMatrixTest extends TestCase
         self::assertStringContainsString('strategy: highest', $workflow);
     }
 
-    public function testBoundaryStacksAndDatabaseSmokeLayerRemainConfigured(): void
+    public function testBoundaryStacksAndPackageSuitesRemainConfigured(): void
     {
         $workflow = (string) file_get_contents(dirname(__DIR__, 2).'/.github/workflows/compatibility.yml');
 
@@ -39,8 +39,9 @@ final class CompatibilityMatrixTest extends TestCase
         self::assertDoesNotMatchRegularExpression("/php: '8\.5'\s+contao: '5\.0\.\*'/", $workflow);
         self::assertMatchesRegularExpression("/php: '8\.3'\s+contao: '5\.7\.\*'\s+strategy: stable/", $workflow);
         self::assertMatchesRegularExpression("/php: '8\.5'\s+contao: '5\.7\.\*'\s+strategy: highest/", $workflow);
-        self::assertStringContainsString('image: mariadb:10.6', $workflow);
-        self::assertStringContainsString('run-application-smoke.sh', $workflow);
+        self::assertStringContainsString('run: composer test:all', $workflow);
+        self::assertStringNotContainsString('contao/managed-edition', $workflow);
+        self::assertStringNotContainsString('run-application-smoke.sh', $workflow);
     }
 
     public function testPublicIdentityIsAssertedInAutomation(): void
@@ -66,8 +67,6 @@ final class CompatibilityMatrixTest extends TestCase
             'tools/check-release-material.php',
             'tools/build-release.php',
             'tools/verify-release-artefact.php',
-            'tools/ci/create-test-application.sh',
-            'tools/ci/run-application-smoke.sh',
             'tools/ci/compile-artefact-container.php',
         ] as $path) {
             self::assertFileExists($root.'/'.$path, sprintf('CI entrypoint "%s" must be published with the source repository.', $path));

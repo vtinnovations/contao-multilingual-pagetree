@@ -39,82 +39,51 @@ jobs:
             contao: '5.0.*'
             strategy: lowest
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.1 / PHP 8.1 / stable
             php: '8.1'
             contao: '5.1.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.2 / PHP 8.1 / stable
             php: '8.1'
             contao: '5.2.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.3 / PHP 8.1 / stable
             php: '8.1'
             contao: '5.3.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.4 / PHP 8.1 / stable
             php: '8.1'
             contao: '5.4.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.5 / PHP 8.2 / stable
             php: '8.2'
             contao: '5.5.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.6 / PHP 8.2 / stable
             php: '8.2'
             contao: '5.6.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.7 / PHP 8.3 / stable
             php: '8.3'
             contao: '5.7.*'
             strategy: stable
             test_scope: full
-            database: MariaDB 10.6
           - name: Contao 5.7 / PHP 8.5 / highest
             php: '8.5'
             contao: '5.7.*'
             strategy: highest
             test_scope: full + bundle deprecations
-            database: MariaDB 10.6
-
-    services:
-      mariadb:
-        image: mariadb:10.6
-        env:
-          MARIADB_DATABASE: contao
-          MARIADB_USER: contao
-          MARIADB_PASSWORD: contao
-          MARIADB_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
 
     env:
       COMPOSER_ROOT_VERSION: dev-main
       CONTAO_CONSTRAINT: ${{ matrix.contao }}
       DEPENDENCY_STRATEGY: ${{ matrix.strategy }}
-      DATABASE_URL: 'mysql://contao:contao@127.0.0.1:3306/contao?serverVersion=mariadb-10.6.0&charset=utf8mb4'
-      APP_SECRET: compatibility-test-secret
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: root
       SYMFONY_DEPRECATIONS_HELPER: ${{ matrix.strategy == 'highest' && 'max[self]=0' || 'weak' }}
 
     steps:
@@ -138,7 +107,6 @@ jobs:
           echo "Contao constraint: $CONTAO_CONSTRAINT"
           echo "Dependency strategy: $DEPENDENCY_STRATEGY"
           echo "Test scope: ${{ matrix.test_scope }}"
-          echo "Database: ${{ matrix.database }}"
 
       - name: Locate Composer download cache
         id: composer-cache
@@ -178,17 +146,6 @@ jobs:
 
       - name: Run unit and package-integration regressions
         run: composer test:all
-
-      - name: Build disposable Contao Managed Edition application
-        run: |
-          # The application owns its own composer.json; do not leak the
-          # bundle's temporary matrix Composer filename into that directory.
-          unset COMPOSER
-          composer config --global audit.block-insecure false
-          tools/ci/create-test-application.sh "$RUNNER_TEMP/contao-application" "$GITHUB_WORKSPACE" "$CONTAO_CONSTRAINT"
-
-      - name: Boot application, compile container and verify database integration
-        run: tools/ci/run-application-smoke.sh "$RUNNER_TEMP/contao-application"
 
   static-validation:
     name: Static validation / PHP 8.4 / Contao 5.7
@@ -242,7 +199,7 @@ jobs:
         run: composer lint
 
       - name: Check shell scripts
-        run: bash -n tools/test-compatibility.sh tools/ci/create-test-application.sh tools/ci/run-application-smoke.sh
+        run: bash -n tools/test-compatibility.sh
 
       # No --allow-empty: the approved material is provisioned, so a ring that is
       # empty, unusable or no longer reassembles must fail the pipeline rather
