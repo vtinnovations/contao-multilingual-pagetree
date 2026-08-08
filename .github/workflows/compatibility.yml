@@ -154,11 +154,19 @@ jobs:
 
       - name: Resolve the selected Contao line
         run: |
+          cp composer.json composer.ci.json
+          echo "COMPOSER=composer.ci.json" >> "$GITHUB_ENV"
+          export COMPOSER=composer.ci.json
+
+          # Historical supported stacks can contain advisories published long
+          # after their release. Resolution remains allowed here so the matrix
+          # can test them; the dedicated audit step still reports advisories.
           composer config audit.block-insecure false
+          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
           if [[ "$DEPENDENCY_STRATEGY" == "lowest" ]]; then
-            composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
+            composer update --with-all-dependencies --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
           else
-            composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-dist --no-interaction --no-progress
+            composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
           fi
 
       - name: Verify the resolved dependency stack
@@ -173,6 +181,9 @@ jobs:
 
       - name: Build disposable Contao Managed Edition application
         run: |
+          # The application owns its own composer.json; do not leak the
+          # bundle's temporary matrix Composer filename into that directory.
+          unset COMPOSER
           composer config --global audit.block-insecure false
           tools/ci/create-test-application.sh "$RUNNER_TEMP/contao-application" "$GITHUB_WORKSPACE" "$CONTAO_CONSTRAINT"
 
@@ -207,11 +218,19 @@ jobs:
 
       - name: Install representative static-analysis stack
         run: |
+          cp composer.json composer.ci.json
+          echo "COMPOSER=composer.ci.json" >> "$GITHUB_ENV"
+          export COMPOSER=composer.ci.json
+
+          # Keep historical dependency resolution separate from the security
+          # audit below; never alter the canonical package metadata.
           composer config audit.block-insecure false
-          composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-dist --no-interaction --no-progress
+          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
+          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
 
       - name: Validate Composer metadata and generated autoloading
         run: |
+          COMPOSER=composer.json composer validate --strict --no-check-lock
           composer validate --strict
           composer dump-autoload --strict-psr --classmap-authoritative
           php tools/verify-installed-stack.php
