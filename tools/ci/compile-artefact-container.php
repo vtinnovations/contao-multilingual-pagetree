@@ -73,6 +73,18 @@ $definitions = $container->getDefinitions();
 foreach ($definitions as $id => $definition) {
     $class = $definition->getClass() ?? $id;
 
+    // Abstract definitions are templates and placeholders, never instantiated:
+    // Symfony removes them while compiling. Registering a namespace prefix with
+    // `resource:` and `exclude:` produces exactly such a placeholder for every
+    // excluded directory, whose "class" is the directory's namespace - so
+    // `ContaoManager`, `DependencyInjection` and `Model` are namespaces, not
+    // classes, and requiring them to exist reports a defect that is not one.
+    // That those directories really ship is verify-release-artefact.php's job,
+    // which CI runs against the same artefact one step earlier.
+    if ($definition->isAbstract()) {
+        continue;
+    }
+
     if (is_string($class) && str_starts_with($class, 'Vtinnovations\\') && !class_exists($class) && !interface_exists($class)) {
         $failures[] = 'Definition points at a class the artefact does not provide: '.$class;
     }
