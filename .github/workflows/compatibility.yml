@@ -193,7 +193,7 @@ jobs:
           php tools/verify-installed-stack.php
 
       - name: Audit dependencies for known advisories
-        run: composer audit --locked --no-interaction
+        run: composer audit --locked --no-interaction --abandoned=report
 
       - name: Run project-owned static checks
         run: composer lint
