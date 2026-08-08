@@ -20,6 +20,9 @@ use Vtinnovations\ContaoMultilingualPagetree\DependencyInjection\VtinnovationsCo
 /**
  * Package metadata, documentation and distribution readiness.
  *
+ * @legacy-identity-reference the former package and product names are asserted
+ * here on purpose so stale branding cannot reappear in the shipped
+ * documentation, which the identity validator itself does not scan
  */
 class ReleaseReadinessTest extends TestCase
 {
