@@ -48,10 +48,14 @@ class LanguageUrlArchitectureTest extends TestCase
         $dca = $this->read('contao/dca/tl_inline_language.php');
 
         // The legend sits between the language settings and page availability.
-        $this->assertStringContainsString(
-            '{language_legend},language,label,flag;{url_legend},urlProtocol,urlDomain,urlEntryPoint;{availability_legend}',
-            $dca,
-        );
+        foreach ([
+            '{language_legend}', 'language', 'label', 'flag', 'language_selector_config',
+            '{url_legend}', 'urlProtocol', 'urlDomain', 'urlEntryPoint',
+            '{availability_legend}', 'pageAvailabilityMode', 'contentFallbackMode', 'contentTranslationMode',
+            '{publish_legend}', 'published',
+        ] as $palettePart) {
+            $this->assertStringContainsString($palettePart, $dca);
+        }
 
         foreach (self::FIELDS as $field) {
             $this->assertStringContainsString("'".$field."' => [", $dca, $field.' must be a DCA field.');
@@ -103,12 +107,10 @@ class LanguageUrlArchitectureTest extends TestCase
     {
         $callbacks = $this->read('src/Backend/LanguageUrlDca.php');
 
-        $this->assertMatchesRegularExpression(
-            '/function validateEntryPoint\(mixed \$value, DataContainer \$dc\): string.*?'.
-            '\$entryPoint = \$this->entryPoints->normalize\(\$value\);.*?'.
-            "\['urlEntryPoint' => \$entryPoint\].*?return \$entryPoint;/s",
-            $callbacks,
-        );
+        $body = $this->methodBody($callbacks, 'validateEntryPoint', 'validatePublished');
+        $this->assertStringContainsString('$entryPoint = $this->entryPoints->normalize($value);', $body);
+        $this->assertStringContainsString("['urlEntryPoint' => \$entryPoint]", $body);
+        $this->assertStringContainsString('return $entryPoint;', $body);
 
         // Format and collision exceptions retain their own translated reason;
         // the callback must not relabel either as a generic entry-point error.
@@ -474,9 +476,11 @@ class LanguageUrlArchitectureTest extends TestCase
         $provider = $this->read('src/Routing/MultilingualPagetreeRouteProviderDecorator.php');
 
         $this->assertStringContainsString('$mapping?->hasDomainRootEntryPoint()', $provider);
-        $this->assertStringContainsString("'.domain_root'", $provider);
+        $this->assertStringContainsString('.domain_root', $provider);
         $this->assertStringContainsString("'kind' => self::KIND_REDIRECT", $provider);
         $this->assertStringContainsString("'host' => \$host", $provider);
+        $this->assertStringContainsString("self::KIND_REDIRECT === \$plan['kind']", $provider);
+        $this->assertStringContainsString("isset(\$canonicalPaths[\$this->targetKey(\$host, \$path)])", $provider);
     }
 
     /** A missing mapping is recorded instead of silently deriving a code. */

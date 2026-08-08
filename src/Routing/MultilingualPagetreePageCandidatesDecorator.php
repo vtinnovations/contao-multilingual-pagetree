@@ -70,8 +70,10 @@ class MultilingualPagetreePageCandidatesDecorator implements CandidatesInterface
         return $candidates;
     }
 
-    public function isCandidate(string $name): bool
+    public function isCandidate($name): bool
     {
+        $name = (string) $name;
+
         return $this->inner->isCandidate($name) || str_starts_with($name, 'tl_page.');
     }
 

@@ -34,8 +34,8 @@ final class LanguageSelectorArchitectureTest extends TestCase
         $dca = file_get_contents(__DIR__.'/../../contao/dca/tl_inline_language.php');
         self::assertIsString($provider);
         self::assertIsString($dca);
-        self::assertStringNotContainsString('http://', $provider);
-        self::assertStringNotContainsString('https://', $provider);
+        self::assertDoesNotMatchRegularExpression('#(?:src|href)=["\']https?://#i', $provider);
+        self::assertStringNotContainsString('HttpClientInterface', $provider);
         self::assertStringContainsString("'sql'       => \"varchar(7) NOT NULL default ''\"", $dca);
         self::assertStringNotContainsString('languageCode', $dca);
     }

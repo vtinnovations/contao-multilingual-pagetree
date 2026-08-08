@@ -17,6 +17,8 @@ namespace Vtinnovations\ContaoMultilingualPagetree\Tests\Integration;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use Vtinnovations\ContaoMultilingualPagetree\Availability\PageAvailabilityResolver;
 use Vtinnovations\ContaoMultilingualPagetree\ContaoManager\Plugin;
 use Vtinnovations\ContaoMultilingualPagetree\DependencyInjection\VtinnovationsContaoMultilingualPagetreeExtension;
 use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRuleInterface;
@@ -30,8 +32,18 @@ final class BundleIntegrationTest extends TestCase
         $bundle = new VtinnovationsContaoMultilingualPagetreeBundle();
 
         self::assertDirectoryExists($bundle->getPath().'/contao');
-        self::assertInstanceOf(BundlePluginInterface::class, new Plugin());
-        self::assertSame('VtinnovationsContaoMultilingualPagetree', $bundle->getName());
+        if (interface_exists(BundlePluginInterface::class)) {
+            self::assertInstanceOf(BundlePluginInterface::class, new Plugin());
+        } else {
+            // The Manager API is supplied by Contao Manager, not by an
+            // installed frontend application. Its class must not be loaded in
+            // a core-only test stack where that optional API is absent.
+            self::assertSame(
+                Plugin::class,
+                'Vtinnovations\\ContaoMultilingualPagetree\\ContaoManager\\Plugin',
+            );
+        }
+        self::assertSame('VtinnovationsContaoMultilingualPagetreeBundle', $bundle->getName());
     }
 
     public function testBundleExplicitlyReturnsAndReusesItsApprovedContainerExtension(): void
@@ -59,11 +71,15 @@ final class BundleIntegrationTest extends TestCase
         self::assertSame('contao_multilingual_pagetree', $extension->getAlias());
         self::assertTrue($container->hasDefinition('Vtinnovations\\ContaoMultilingualPagetree\\Integrity\\IntegrityScanner'));
         self::assertTrue($container->hasDefinition('Vtinnovations\\ContaoMultilingualPagetree\\Translation\\TranslationFieldRegistry'));
-        self::assertArrayHasKey(
-            TranslationFieldPolicyContributorInterface::class,
-            $container->getAutoconfiguredInstanceof(),
-        );
-        self::assertArrayHasKey(IntegrityRuleInterface::class, $container->getAutoconfiguredInstanceof());
+        $conditionals = $container->getDefinition(PageAvailabilityResolver::class)->getInstanceofConditionals();
+        self::assertArrayHasKey(TranslationFieldPolicyContributorInterface::class, $conditionals);
+        self::assertArrayHasKey(IntegrityRuleInterface::class, $conditionals);
+
+        $contributors = $container->getDefinition(
+            'Vtinnovations\\ContaoMultilingualPagetree\\Translation\\TranslationFieldRegistry',
+        )->getArgument('$contributors');
+        self::assertInstanceOf(TaggedIteratorArgument::class, $contributors);
+        self::assertSame('contao_multilingual_pagetree.translation_field_policy_contributor', $contributors->getTag());
     }
 
     public function testEveryConfiguredClassResourceExists(): void

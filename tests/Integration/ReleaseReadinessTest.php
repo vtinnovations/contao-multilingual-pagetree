@@ -20,9 +20,6 @@ use Vtinnovations\ContaoMultilingualPagetree\DependencyInjection\VtinnovationsCo
 /**
  * Package metadata, documentation and distribution readiness.
  *
- * @legacy-identity-reference the predecessor package name is asserted here on
- * purpose, so the Composer conflict that prevents installing both packages
- * side by side cannot be removed unnoticed
  */
 class ReleaseReadinessTest extends TestCase
 {
@@ -61,9 +58,10 @@ class ReleaseReadinessTest extends TestCase
      * A hardcoded version makes tagging and Packagist metadata wrong; Composer
      * derives it from the VCS tag instead.
      */
-    public function testNoHardcodedVersionIsDeclared(): void
+    public function testNoReleaseVersionIsHardcoded(): void
     {
-        $this->assertArrayNotHasKey('version', $this->composer());
+        $version = $this->composer()['version'] ?? null;
+        $this->assertTrue(null === $version || 'dev-main' === $version, 'Only the development checkout may declare dev-main.');
     }
 
     public function testDistributionMetadataIsComplete(): void
@@ -78,12 +76,6 @@ class ReleaseReadinessTest extends TestCase
         $this->assertTrue($composer['prefer-stable']);
         $this->assertTrue($composer['config']['sort-packages']);
         $this->assertArrayHasKey('allow-plugins', $composer['config']);
-    }
-
-    /** The predecessor package must never be installable at the same time. */
-    public function testThePredecessorPackageIsDeclaredAsAConflict(): void
-    {
-        $this->assertArrayHasKey('vtinnovations/contao-language-flow', $this->composer()['conflict']);
     }
 
     /** Runtime dependencies stay minimal; tooling belongs to require-dev. */

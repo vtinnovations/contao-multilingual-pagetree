@@ -155,11 +155,10 @@ jobs:
       - name: Resolve the selected Contao line
         run: |
           composer config audit.block-insecure false
-          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
           if [[ "$DEPENDENCY_STRATEGY" == "lowest" ]]; then
-            composer update --with-all-dependencies --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
+            composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
           else
-            composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+            composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-dist --no-interaction --no-progress
           fi
 
       - name: Verify the resolved dependency stack
@@ -209,8 +208,7 @@ jobs:
       - name: Install representative static-analysis stack
         run: |
           composer config audit.block-insecure false
-          composer require "contao/core-bundle:$CONTAO_CONSTRAINT" --no-update
-          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+          composer update "contao/core-bundle:$CONTAO_CONSTRAINT" --with-all-dependencies --prefer-dist --no-interaction --no-progress
 
       - name: Validate Composer metadata and generated autoloading
         run: |

@@ -28,7 +28,9 @@ final class BackendWorkflowTest extends TestCase
         }
         $tabs = (string) file_get_contents(self::ROOT.'/src/Backend/LanguageTabs.php');
         self::assertStringContainsString('PaletteHelper::removeFromTable', $tabs);
-        self::assertStringContainsString("['additional_languages']", $tabs);
+        self::assertStringContainsString('hasPublishedTargetLanguage($rootId)', $tabs);
+        self::assertStringContainsString("PaletteHelper::addToTable(\$table, 'language_legend', ['language_tabs'])", $tabs);
+        self::assertStringContainsString('isRootPage(', $tabs);
     }
 
     public function testSiteRootLanguageManagerAndRootScopedValidationAreRegistered(): void
@@ -104,7 +106,7 @@ final class BackendWorkflowTest extends TestCase
         // The section never posts to a licence route or leaks a key or a host.
         self::assertStringNotContainsString('/licence/activate', $manager);
         self::assertStringNotContainsString('licence_key=', $script);
-        self::assertStringNotContainsString('www.v-t.one', $script);
+        self::assertDoesNotMatchRegularExpression('#(?:src|href)=["\']https?://#i', $script);
     }
 
     /**

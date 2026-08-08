@@ -176,6 +176,8 @@ class TranslationResourceQualityTest extends TestCase
             'src/Review/ReviewBadgeRenderer.php',
         ];
 
+        $violations = [];
+
         foreach ($files as $file) {
             $contents = (string) file_get_contents(self::ROOT.'/'.$file);
 
@@ -184,13 +186,13 @@ class TranslationResourceQualityTest extends TestCase
             preg_match_all("/'([A-Z][a-z]+(?: [a-z]+){3,}\\.)'/", $contents, $matches);
 
             foreach ($matches[1] as $sentence) {
-                $this->assertStringContainsString(
-                    'Contao Multilingual Pagetree',
-                    $sentence,
-                    sprintf('Hardcoded user-facing text in %s: %s', $file, $sentence),
-                );
+                if (!str_contains($sentence, 'Contao Multilingual Pagetree')) {
+                    $violations[] = sprintf('%s: %s', $file, $sentence);
+                }
             }
         }
+
+        $this->assertSame([], $violations, 'Hardcoded user-facing backend text: '.implode('; ', $violations));
     }
 
     /**

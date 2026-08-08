@@ -185,8 +185,10 @@ class BackendLanguageContextArchitectureTest extends TestCase
     {
         $tabs = $this->read('src/Backend/LanguageTabs.php');
 
-        $this->assertStringContainsString('if (!$this->isRecordAction()) {', $tabs);
+        $this->assertStringContainsString('if (!$this->isRecordAction($table)) {', $tabs);
         $this->assertStringContainsString("in_array(\$action, ['edit', 'show'], true)", $tabs);
+        $this->assertStringContainsString('isSubmittedRecordAction($action, $formSubmit, $table)', $tabs);
+        $this->assertStringContainsString('hash_equals($table, $formSubmit)', $tabs);
     }
 
     /** The licensing implementation is untouched by this repair. */

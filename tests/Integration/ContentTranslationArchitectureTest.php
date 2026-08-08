@@ -106,7 +106,8 @@ class ContentTranslationArchitectureTest extends TestCase
 
         $adapter = $this->read('src/Backend/ContentTranslationAdapter.php');
         $this->assertStringContainsString("\$GLOBALS['TL_DCA'][\$table]['config']['onload_callback'][] = [self::class, 'prepareTranslationForm'];", $adapter);
-        $this->assertStringContainsString("\$GLOBALS['TL_DCA'][\$table]['config']['onbeforesubmit_callback'][] = [self::class, 'persistTranslation'];", $adapter);
+        $this->assertStringContainsString("\$GLOBALS['TL_DCA'][\$table]['config']['onsubmit_callback'][] = [self::class, 'flushTranslation'];", $adapter);
+        $this->assertStringContainsString("['save_callback'][] = [self::class, 'captureTranslatedValue']", $adapter);
     }
 
     /**
@@ -143,8 +144,9 @@ class ContentTranslationArchitectureTest extends TestCase
         $adapter = $this->read('src/Backend/ContentTranslationAdapter.php');
 
         $this->assertStringContainsString('$this->repository->save(', $adapter);
-        $this->assertStringContainsString('$unchanged[$field] = $source[$field];', $adapter);
-        $this->assertStringContainsString('return $unchanged;', $adapter);
+        $capture = $this->methodBody($adapter, 'captureTranslatedValue', 'flushTranslation');
+        $this->assertStringContainsString('$this->buffer->capture(', $capture);
+        $this->assertStringContainsString('return array_key_exists($field, $source) ? $source[$field] : $value;', $capture);
 
         // The adapter never writes to the content table itself.
         $this->assertStringNotContainsString('UPDATE tl_content', $adapter);
@@ -229,7 +231,10 @@ class ContentTranslationArchitectureTest extends TestCase
 
         $this->assertStringContainsString("#[AsHook('isVisibleElement')]", $listener);
         $this->assertStringContainsString('$this->scopedOverlay->apply(', $listener);
-        $this->assertStringContainsString('$languageMode = $this->languageMode($element, $language);', $listener);
+        $this->assertStringContainsString('$this->isRenderable($element)', $listener);
+        $this->assertStringContainsString('$this->usesConnectedOverlay($element)', $listener);
+        $this->assertStringContainsString('$this->translationLocator->find(', $listener);
+        $this->assertStringContainsString('$fallbackMode = $this->fallbackMode($language);', $listener);
         $this->assertStringContainsString('self::TRANSLATION_TABLE', $listener);
     }
 
@@ -419,10 +424,8 @@ class ContentTranslationArchitectureTest extends TestCase
     {
         $services = $this->read('src/Resources/config/services.yaml');
 
-        $this->assertMatchesRegularExpression(
-            '/Content\\ContentTranslationBuffer:\s*\n\s*public: true\s*\n\s*tags:.*?kernel\.reset/s',
-            $services,
-        );
+        $this->assertStringContainsString('Content\\ContentTranslationBuffer:', $services);
+        $this->assertMatchesRegularExpression('/ContentTranslationBuffer:\s*\n\s*public: true\s*\n\s*tags:\s*\n\s*- \{ name: kernel\.reset, method: reset \}/', $services);
         $this->assertStringContainsString(
             'implements ResetInterface',
             $this->read('src/Content/ContentTranslationBuffer.php'),
