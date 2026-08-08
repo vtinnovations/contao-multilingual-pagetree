@@ -43,8 +43,8 @@ class LanguageUrlGenerationTest extends TestCase
 
         $german = $resolver->forLanguage(self::ROOT, 'de');
         $this->assertSame('www.xyz.de', $german->effectiveHostname);
-        $this->assertSame('/de', $german->effectiveEntryPoint);
-        $this->assertSame('https://www.xyz.de/de', $german->canonicalBaseUrl());
+        $this->assertSame('/', $german->effectiveEntryPoint);
+        $this->assertSame('https://www.xyz.de', $german->canonicalBaseUrl());
 
         $russian = $resolver->forLanguage(self::ROOT, 'ru');
         $this->assertSame('www.xyz.com', $russian->effectiveHostname, 'An empty domain inherits the website root hostname.');
@@ -203,7 +203,7 @@ class LanguageUrlGenerationTest extends TestCase
 
         $this->assertStringContainsString('r1', $german->cacheKey());
         $this->assertStringContainsString('www.xyz.de', $german->cacheKey());
-        $this->assertStringContainsString('/de', $german->cacheKey());
+        $this->assertStringContainsString('|/|domain_root|', $german->cacheKey());
         $this->assertStringContainsString('https', $german->cacheKey());
         $this->assertNotSame($german->cacheKey(), $german->withPublished(false)->cacheKey());
         $this->assertNotSame($german->cacheKey(), $resolver->forLanguage(self::ROOT, 'ru')->cacheKey());

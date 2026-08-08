@@ -27,17 +27,17 @@ use Contao\StringUtil;
 final class ReviewBadgeRenderer
 {
     private const SYMBOLS = [
-        ReviewStatus::UpToDate->value => '✓',
-        ReviewStatus::NeedsReview->value => '!',
-        ReviewStatus::Unreviewed->value => '•',
-        ReviewStatus::SourceMissing->value => '⚠',
+        'up_to_date' => '✓',
+        'needs_review' => '!',
+        'unreviewed' => '•',
+        'source_missing' => '⚠',
     ];
 
     private const COLOURS = [
-        ReviewStatus::UpToDate->value => ['#dcfce7', '#15803d'],
-        ReviewStatus::NeedsReview->value => ['#fef3c7', '#92400e'],
-        ReviewStatus::Unreviewed->value => ['#e5e7eb', '#374151'],
-        ReviewStatus::SourceMissing->value => ['#fef2f2', '#991b1b'],
+        'up_to_date' => ['#dcfce7', '#15803d'],
+        'needs_review' => ['#fef3c7', '#92400e'],
+        'unreviewed' => ['#e5e7eb', '#374151'],
+        'source_missing' => ['#fef2f2', '#991b1b'],
     ];
 
     /**

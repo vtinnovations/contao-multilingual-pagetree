@@ -70,9 +70,15 @@ class ContentTranslationListenerTest extends TestCase
     public function testFragmentControllerElementIsRenderedOnceWithTranslatedValues(): void
     {
         $element = $this->contentModel(1, ['type' => 'my_fragment', 'text' => 'Source text']);
+        $registry = new TranslationFieldRegistry([new class implements TranslationFieldPolicyContributorInterface {
+            public function registrations(): iterable
+            {
+                yield new TranslationFieldRegistration('tl_content', 'text', 'string', 'my_fragment');
+            }
+        }]);
         $listener = $this->listener([
             'tl_content_translation|1|de' => $this->translation(1, ['text' => 'Übersetzter Text'], ['text' => FieldStateMap::CUSTOM]),
-        ]);
+        ], registry: $registry);
 
         $controllerCalls = 0;
         $requestAttributes = [];

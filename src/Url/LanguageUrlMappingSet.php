@@ -147,7 +147,7 @@ final class LanguageUrlMappingSet
     {
         $matched = $this->collect($host, $path, true);
 
-        if ([] === $matched && !$this->claimsHost($host)) {
+        if ([] === $matched && !$this->hasCustomMapping() && !$this->claimsHost($host)) {
             // Contao itself already decided that this request belongs to this
             // root - through its own site resolution, a proxy or a root without
             // a configured domain. The hostname therefore adds nothing here and

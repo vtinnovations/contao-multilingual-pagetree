@@ -16,20 +16,12 @@ namespace Vtinnovations\ContaoMultilingualPagetree\Tests\EventListener;
 
 use Contao\PageModel;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Vtinnovations\ContaoMultilingualPagetree\Availability\PageAvailabilityResolver;
 use Vtinnovations\ContaoMultilingualPagetree\Availability\PublicationChecker;
 use Vtinnovations\ContaoMultilingualPagetree\EventListener\ContentTranslationListener;
 use Vtinnovations\ContaoMultilingualPagetree\EventListener\PageTranslationListener;
-use Vtinnovations\ContaoMultilingualPagetree\Helper\LanguageHelper;
 use Vtinnovations\ContaoMultilingualPagetree\Routing\CanonicalUrlPolicy;
-use Vtinnovations\ContaoMultilingualPagetree\Helper\CanonicalHost;
-use Vtinnovations\ContaoMultilingualPagetree\Url\EntryPointNormalizer;
-use Vtinnovations\ContaoMultilingualPagetree\Url\IncomingLanguageResolver;
-use Vtinnovations\ContaoMultilingualPagetree\Url\LanguageDomainNormalizer;
-use Vtinnovations\ContaoMultilingualPagetree\Url\LanguageUrlResolver;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\ContentElementRenderPipeline;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\FakeLanguageHelper;
 use Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures\FakeModel;
@@ -176,13 +168,6 @@ class PageAvailabilityRenderingTest extends TestCase
      */
     private function listener(string $mode, array $translations, PageModel $currentPage): PageTranslationListener
     {
-        $request = Request::create('/de/about-us');
-        $request->attributes->set('pageModel', $currentPage);
-        $request->attributes->set('_contao_multilingual_pagetree', 'de');
-
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
-
         $registry = (new FakeSiteLanguageRegistry())->add(1, 'en', 'default')->add(1, 'de', $mode);
         $urlPolicy = new CanonicalUrlPolicy();
         $overlayResolver = new TranslationOverlayResolver(new TranslationFieldRegistry(), new FieldStateMap());
@@ -195,20 +180,7 @@ class PageAvailabilityRenderingTest extends TestCase
             new PublicationChecker(),
         );
 
-        $urlResolver = new LanguageUrlResolver(
-            new LanguageDomainNormalizer(new CanonicalHost()),
-            new EntryPointNormalizer(),
-        );
-
-        $languageHelper = new LanguageHelper(
-            $requestStack,
-            $urlPolicy,
-            $registry,
-            $availabilityResolver,
-            new PublicationChecker(),
-            new IncomingLanguageResolver($urlResolver),
-            $urlResolver,
-        );
+        $languageHelper = new FakeLanguageHelper('de', 'en', true, $currentPage);
 
         return new PageTranslationListener($languageHelper, null, $overlayResolver, new TranslationFieldRegistry(), $availabilityResolver);
     }

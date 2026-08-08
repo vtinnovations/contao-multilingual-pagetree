@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Vtinnovations\ContaoMultilingualPagetree\Tests\Fixtures;
 
+use Contao\PageModel;
 use Vtinnovations\ContaoMultilingualPagetree\Availability\PublicationChecker;
 use Vtinnovations\ContaoMultilingualPagetree\Helper\LanguageHelper;
 
@@ -29,6 +30,7 @@ class FakeLanguageHelper extends LanguageHelper
         private string $activeLanguage = 'de',
         private string $defaultLanguage = 'en',
         private bool $frontendRequest = true,
+        private ?PageModel $currentPage = null,
     ) {
         // The parent dependencies are deliberately not initialised: only the
         // request independent methods below are used by the render listeners.
@@ -42,6 +44,16 @@ class FakeLanguageHelper extends LanguageHelper
     public function getActiveLanguage(): string
     {
         return $this->activeLanguage;
+    }
+
+    public function getCurrentPageModel(): ?PageModel
+    {
+        return $this->currentPage;
+    }
+
+    public function getRootPageId(): int
+    {
+        return null === $this->currentPage ? 0 : (int) $this->currentPage->rootId;
     }
 
     public function isDefaultLanguage(?string $language = null, ?int $rootPageId = null): bool

@@ -83,6 +83,21 @@ final class EntryPointNormalizer
             throw $this->invalid('entryPointInvalid');
         }
 
+        // Encoded separators/dots and literal dot segments are traversal before
+        // they are anything else. Classify them before the hostname heuristic
+        // so a value such as "../de" receives the precise security error.
+        $lower = strtolower($path);
+
+        if (str_contains($lower, '%2f') || str_contains($lower, '%5c') || str_contains($lower, '%2e')) {
+            throw $this->invalid('entryPointTraversal');
+        }
+
+        foreach (explode('/', $path) as $rawSegment) {
+            if ('.' === $rawSegment || '..' === $rawSegment) {
+                throw $this->invalid('entryPointTraversal');
+            }
+        }
+
         // "//host/path" and "www.example.com/de" are host forms, not paths.
         if (str_starts_with($path, '//')) {
             throw $this->invalid('entryPointHost');
@@ -92,15 +107,6 @@ final class EntryPointNormalizer
         // component in that form is a hostname, not an entry-point segment.
         if (!str_starts_with($path, '/') && 1 === preg_match('/^[^\/]*\./', $path)) {
             throw $this->invalid('entryPointHost');
-        }
-
-        // An encoded separator or an encoded dot could turn into a different
-        // path after decoding, so the stored value must never contain one. The
-        // stored entry point is exactly what the URL will contain.
-        $lower = strtolower($path);
-
-        if (str_contains($lower, '%2f') || str_contains($lower, '%5c') || str_contains($lower, '%2e')) {
-            throw $this->invalid('entryPointTraversal');
         }
 
         $path = '/'.ltrim($path, '/');

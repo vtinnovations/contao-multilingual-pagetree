@@ -131,9 +131,11 @@ class RenderingArchitectureTest extends TestCase
         $template = (string) file_get_contents(__DIR__.'/../../contao/templates/mod_language_switcher.html.twig');
 
         // The template renders resolved states only.
-        foreach (['findTranslation', 'published', 'translation', 'availability'] as $forbidden) {
+        foreach (['findTranslation', 'PageAvailabilityResolver', 'pageAvailabilityMode', 'hide_untranslated', 'show_default'] as $forbidden) {
             $this->assertStringNotContainsString($forbidden, $template, 'The template must not decide availability.');
         }
+
+        $this->assertStringContainsString('lang.available', $template, 'The template must render the availability state already resolved by the builder.');
 
         $this->assertStringContainsString('aria-disabled="true"', $template);
         $this->assertStringContainsString('aria-current="page"', $template);

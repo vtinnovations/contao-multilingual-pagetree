@@ -148,25 +148,28 @@ final class SourceLayoutTest extends TestCase
      *
      * @dataProvider gates
      */
-    public function testEveryProtectedOperationChecksAtItsOwnBoundary(string $file, string $capability): void
+    public function testEveryProtectedOperationChecksAtItsOwnBoundary(string $file, string $gate, ?string $policyCall = 'allows('): void
     {
         $contents = (string) file_get_contents(self::ROOT.'/'.$file);
 
-        self::assertStringContainsString('Capability::'.$capability, $contents, $file.' lost its server-side gate.');
-        self::assertStringContainsString('allows(', $contents, $file.' must ask the policy, not a cached flag.');
+        self::assertStringContainsString($gate, $contents, $file.' lost its server-side gate.');
+
+        if (null !== $policyCall) {
+            self::assertStringContainsString($policyCall, $contents, $file.' must ask the policy, not a cached flag.');
+        }
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{string, string, ?string}>
      */
     public static function gates(): iterable
     {
-        yield 'translation creation' => ['src/Backend/LanguageTabs.php', 'TranslationEditing'];
-        yield 'review marking' => ['src/Review/TranslationReviewMarker.php', 'TranslationReview'];
-        yield 'free content mode' => ['src/Content/ModeSwitchGuard.php', 'FreeContentMode'];
-        yield 'free content import' => ['src/Content/ConnectedToFreeImporter.php', 'FreeContentMode'];
-        yield 'integrity repair' => ['src/Integrity/IntegrityRepairExecutor.php', 'IntegrityRepair'];
-        yield 'cascade execution' => ['src/Integrity/CascadeCleanup.php', 'IntegrityRepair'];
+        yield 'translation creation' => ['src/Backend/LanguageTabs.php', '$this->context->mayEditTranslations()', null];
+        yield 'review marking' => ['src/Review/TranslationReviewMarker.php', 'Capability::TranslationReview', 'allows('];
+        yield 'free content mode' => ['src/Content/ModeSwitchGuard.php', 'Capability::FreeContentMode', 'allows('];
+        yield 'free content import' => ['src/Content/ConnectedToFreeImporter.php', 'Capability::FreeContentMode', 'allows('];
+        yield 'integrity repair' => ['src/Integrity/IntegrityRepairExecutor.php', 'Capability::IntegrityRepair', 'allows('];
+        yield 'cascade execution' => ['src/Integrity/CascadeCleanup.php', 'Capability::IntegrityRepair', 'allows('];
     }
 
     /** Visitor-facing behaviour is never gated: a problem must not take a site down. */

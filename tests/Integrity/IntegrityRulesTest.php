@@ -140,13 +140,16 @@ class IntegrityRulesTest extends TestCase
         $data = (new InMemoryIntegrityDataSource())
             ->put('tl_page', ['id' => 20, 'type' => 'regular'])
             ->withPageRoot(20, 2)
-            ->put('tl_page_translation', ['id' => 5, 'pid' => 20, 'language' => 'de']);
+            ->put('tl_article', ['id' => 5, 'pid' => 20, ContentOwnership::FIELD_LANGUAGE => 'de', ContentOwnership::FIELD_ROOT => 1])
+            ->put('tl_content', ['id' => 7, 'pid' => 5, 'ptable' => 'tl_article', ContentOwnership::FIELD_LANGUAGE => 'de', ContentOwnership::FIELD_ROOT => 1]);
 
-        // Scanning root 1 sees a translation whose source belongs to root 2.
-        $data->pageRoots[20] = 2;
-        $issues = $this->relationRule()->scan(IntegrityScope::installation(), $data);
+        $issues = (new FreeContentRule(new FreeContentRelationValidator()))
+            ->scan(IntegrityScope::installation(), $data)
+            ->filterCode(IntegrityIssueCode::CROSS_SITE_RELATION)
+            ->all();
 
-        $this->assertNotNull($issues->filterCode(IntegrityIssueCode::MISSING_SOURCE)->all()[0] ?? null);
+        $this->assertNotNull($issues[0] ?? null);
+        $this->assertSame(IntegritySeverity::Critical, $issues[0]->severity);
     }
 
     /** Requirements 26, 31 and 32 */

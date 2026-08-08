@@ -31,7 +31,7 @@ final class CapturingLogger extends AbstractLogger
     /**
      * @param array<string, mixed> $context
      */
-    public function log($level, \Stringable|string $message, array $context = []): void
+    public function log($level, $message, array $context = []): void
     {
         $this->records[] = [
             'level' => (string) $level,

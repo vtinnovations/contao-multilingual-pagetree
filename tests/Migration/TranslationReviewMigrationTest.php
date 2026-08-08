@@ -91,7 +91,9 @@ class TranslationReviewMigrationTest extends TestCase
 
         $connection->expects($this->atLeastOnce())->method('update');
 
-        $this->assertTrue((new TranslationReviewMigration($connection, new TranslationFieldRegistry()))->shouldRun());
+        $migration = new TranslationReviewMigration($connection, new TranslationFieldRegistry());
+        $this->assertTrue($migration->shouldRun());
+        $this->assertTrue($migration->run()->isSuccessful());
     }
 
     /** Requirement 84 */
@@ -119,7 +121,9 @@ class TranslationReviewMigrationTest extends TestCase
 
         $connection->expects($this->atLeastOnce())->method('update');
 
-        $this->assertTrue((new TranslationReviewMigration($connection, new TranslationFieldRegistry()))->shouldRun());
+        $migration = new TranslationReviewMigration($connection, new TranslationFieldRegistry());
+        $this->assertTrue($migration->shouldRun());
+        $this->assertTrue($migration->run()->isSuccessful());
     }
 
     public function testAMissingTableIsNotAnError(): void

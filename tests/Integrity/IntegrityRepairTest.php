@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 namespace Vtinnovations\ContaoMultilingualPagetree\Tests\Integrity;
 
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityCacheInvalidatorInterface;
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityWriterInterface;
+
 use PHPUnit\Framework\TestCase;
 use Vtinnovations\ContaoMultilingualPagetree\Integrity\CascadeCleanup;
 use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityIssue;

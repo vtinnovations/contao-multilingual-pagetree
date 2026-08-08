@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Vtinnovations\ContaoMultilingualPagetree\Tests\Integrity;
 
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityDataSourceInterface;
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityIssueCollection;
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityRuleInterface;
+use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityScope;
+
 use PHPUnit\Framework\TestCase;
 use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityIssue;
 use Vtinnovations\ContaoMultilingualPagetree\Integrity\IntegrityIssueCode;
