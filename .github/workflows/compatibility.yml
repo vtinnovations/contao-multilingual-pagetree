@@ -189,7 +189,7 @@ jobs:
         run: |
           COMPOSER=composer.json composer validate --strict --no-check-lock
           composer validate --strict
-          composer dump-autoload --strict-psr --classmap-authoritative
+          composer --no-plugins dump-autoload --strict-psr --classmap-authoritative
           php tools/verify-installed-stack.php
 
       - name: Audit dependencies for known advisories
